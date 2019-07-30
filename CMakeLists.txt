@@ -11,7 +11,7 @@ set(HEADERS
    )
 
 set(SOURCES 
-	scheme.c
+	scheme.cpp
     )
 
 ADD_EXECUTABLE(scheme_repl ${HEADERS} ${SOURCES})
