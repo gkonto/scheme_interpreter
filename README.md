@@ -1,4 +1,5 @@
 # scheme_interpreter
+<<<<<<< HEAD
 Scheme Interpreter written in c++
 
 (PROJECT UNDER DEVELOPMENT)
@@ -20,3 +21,6 @@ cmake ../
 make Job Done.
 
 Follow the same instructions for compiling the tests folder.
+=======
+A basic Scheme Interpreter written in c++
+>>>>>>> 2c5142fbf20809ac2f15a09516f26648da20dd37
