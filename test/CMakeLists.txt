@@ -1,19 +1,17 @@
 cmake_minimum_required(VERSION 2.8.7)
-PROJECT(scheme)
-
+PROJECT(scheme_test)
 add_definitions("-Wall -std=c++0x")
-
 cmake_policy(SET CMP0002 OLD)
 cmake_policy(SET CMP0000 OLD)
 
 
 set(HEADERS
-	object.hpp
+	../object.hpp
    )
 
 set(SOURCES 
-	object.cpp
-	scheme.cpp
+	main.cpp
+	../object.cpp
     )
 
-ADD_EXECUTABLE(scheme_repl ${HEADERS} ${SOURCES})
+ADD_EXECUTABLE(scheme_test ${HEADERS} ${SOURCES})
