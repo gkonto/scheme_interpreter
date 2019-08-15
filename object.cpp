@@ -141,7 +141,7 @@ std::string write(Object *obj)
 			return ss.str();
 		}
 		case TT_BOOLEAN: {
-			char val = is_false(obj) ? 'f' : 't';
+			std::string val = is_false(obj) ? "#f" : "#t";
 			ss << val;
 			return ss.str();
 		}

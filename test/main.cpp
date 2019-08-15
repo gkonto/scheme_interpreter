@@ -11,6 +11,7 @@ class Test_SchemeInterpreter
 	public:
 		Test_SchemeInterpreter()
 		{
+			init();
 			_test("123", "123");
 			_test("-123", "-123");
 			_test("007", "7");

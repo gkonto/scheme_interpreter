@@ -10,6 +10,7 @@ int main(void)
 	printf("Welcome to Bootstrap Scheme. "
 		"Use ctrl-c to exit.\n");
 
+	init();
 	while (1)
 	{
 		std::cout << "> ";
@@ -18,8 +19,7 @@ int main(void)
 		// That is, if input is "          Hello World!          ",
 		// in iostream will be stored: "Hello"
 		// That is, no eat_whitespace is needed.
-		write(eval(read(std::cin)));
-		std::cout << std::endl;
+		std::cout << write(eval(read(std::cin))) << std::endl;
 	} /* while  */
 
 	return 0;
