@@ -15,8 +15,18 @@ class Test_SchemeInterpreter
 			_test("123", "123");
 			_test("-123", "-123");
 			_test("007", "7");
+			
+			// booleans
 			_test("#t", "#t");
 			_test("#f", "#f");
+	
+
+			// chars
+			_test("#\\a", "#\\a");
+			_test("#\\newline", "#\\newline");
+			_test("#\\\n", "#\\newline");
+			_test("#\\space", "#\\space");
+			_test("#\\ ", "#\\space");
 		}
 
 		~Test_SchemeInterpreter()
@@ -30,7 +40,7 @@ class Test_SchemeInterpreter
 		void _test(const std::string &input, const std::string &expecting)
 		{
 			std::istringstream it(input);
-
+			std::cout << "[+] Test: " << input << std::endl;
 			std::string got = write(eval(read(it)));
 			if (expecting.compare(got)) {
 				std::cout << "Error in test!" << std::endl;
@@ -39,6 +49,7 @@ class Test_SchemeInterpreter
 				std::cout << "Got      : " << got << std::endl;
 				exit(1);
 			}
+			std::cout << "[-]       " << input << " --- Success" << std::endl;
 		}
 };
 

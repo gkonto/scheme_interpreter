@@ -10,16 +10,23 @@
 enum ObjectType
 {
 	TT_FIXNUM,
-	TT_BOOLEAN
+	TT_BOOLEAN,
+	TT_CHARACTER,
+
+	TT_MAX
 };
 
 struct Object 
 {
-	Object(long value, ObjectType type) : value_(value), type_(type) {}
+	explicit Object(long value, ObjectType type) : long_value_(value), type_(type) {}
+	explicit Object(bool value, ObjectType type) : bool_value_(value), type_(type) {}
+	explicit Object(char value, ObjectType type) : char_value_(value), type_(type) {}
 
 	union
 	{
-		long value_;
+		long long_value_;
+		bool bool_value_;
+		char char_value_;
 	};
 	ObjectType type_;
 };

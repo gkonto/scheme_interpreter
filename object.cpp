@@ -35,10 +35,17 @@ bool is_fixnum(Object *obj)
 }
 
 /*****************************************************************/
+bool is_character(Object *obj)
+{
+	return obj->type_ == TT_CHARACTER;
+}
+
+
+/*****************************************************************/
 void init(void)
 {
-	false_obj = new Object(0, TT_BOOLEAN);
-	true_obj  = new Object(1, TT_BOOLEAN);
+	false_obj = new Object(false, TT_BOOLEAN);
+	true_obj  = new Object(true, TT_BOOLEAN);
 }
 /***************************** READ ******************************/
 
@@ -70,6 +77,59 @@ void eat_whitespace(std::istream &in)
 }
 
 /*****************************************************************/
+void eat_expected_string(std::istream &in, const std::string &to_compare)
+{
+	//std::string got = in.str();
+
+	std::string got;
+	in >> got;
+
+	if (got.compare(to_compare)) {
+		std::cerr << "unexpected character" << to_compare << std::endl;	
+		exit(1);
+	}
+}
+
+/*****************************************************************/
+void peek_expected_delimiter(std::istream &in) 
+{
+	if (!is_delimiter(in.peek())) {
+		std::cerr << "character not followed by delimiter" << std::endl;
+		exit(1);
+	}
+}
+
+/*****************************************************************/
+
+Object *read_character(std::istream &in)
+{
+	char c = in.get();
+	switch (c) {
+		case EOF:
+			std::cerr << "incomplete character literal" << std::endl;
+			exit(1);
+		case 's':
+			if (in.peek() == 'p') {
+				eat_expected_string(in, "pace");
+				peek_expected_delimiter(in);
+				return new Object(' ', TT_CHARACTER);
+			}
+			break;
+		case 'n':
+			if (in.peek() == 'e') {
+				eat_expected_string(in, "ewline");
+				peek_expected_delimiter(in);
+				return new Object('\n', TT_CHARACTER);
+			}
+			break;
+	}
+	peek_expected_delimiter(in);
+
+	return new Object(c, TT_CHARACTER);
+
+}
+
+/*****************************************************************/
 
 Object *read(std::istream &in) 
 {
@@ -87,6 +147,8 @@ Object *read(std::istream &in)
 				return true_obj;
 			case 'f':
 				return false_obj;
+			case '\\':
+				return read_character(in);
 			default:
 				std::cerr << "uknown boolean literal" << std::endl;
 				exit(1);
@@ -137,7 +199,7 @@ std::string write(Object *obj)
 	switch (obj->type_)
 	{
 		case TT_FIXNUM: {
-			ss << obj->value_;
+			ss << obj->long_value_;
 			return ss.str();
 		}
 		case TT_BOOLEAN: {
@@ -145,7 +207,24 @@ std::string write(Object *obj)
 			ss << val;
 			return ss.str();
 		}
+		case TT_CHARACTER: {
+			char c = obj->char_value_;
+			std::string ret("#\\");
+			switch (c) {
+				case '\n':
+					ret.append("newline");
+					return ret;
+				case ' ':
+					ret.append("space");
+					return ret;
+				default:
+					ret += c;
+					return ret;
+
+			}
+		}
 		default: {
+			std::cout << obj->type_ << std::endl;
 			std::cerr << "cannot write unknown type" << std::endl;
 			exit(1);
 		}
