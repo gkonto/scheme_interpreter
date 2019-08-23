@@ -40,6 +40,11 @@ bool is_character(Object *obj)
 	return obj->type_ == TT_CHARACTER;
 }
 
+bool is_string(Object *obj)
+{
+	return obj->type_ == TT_STRING;
+}
+
 
 /*****************************************************************/
 void init(void)
@@ -173,6 +178,37 @@ Object *read(std::istream &in)
 			std::cerr << "number not followed by delimiter" << std::endl;
 			exit(1);
 		}
+	} else if (c == '"') { 
+		std::string str;
+		str += '"';
+
+		while ((c = in.get()) != '"') {
+			if (c == '\\') {
+				str += '\\';
+				c = in.get();
+				/*
+				if (c == 'n') {
+					c = '\n';
+				}
+				*/
+				if (c == '"') {
+					c = '"';
+				}
+
+			}
+			if (c == '\n') {
+				str += "\\n";
+				continue;
+			}
+			if (c == EOF) {
+				std::cerr << "non-terminated string liteal" << std::endl;
+				exit(1);
+			}
+			str += c;
+		}
+		str += '"';
+		return new Object(str, TT_STRING);
+
 	} else {
 		std::cerr << "bab input. Unexpected" << (char)c << std::endl;
 		exit(1);
@@ -223,6 +259,10 @@ std::string write(Object *obj)
 
 			}
 		}
+		case TT_STRING: {
+					std::string str = obj->str_value_;
+					return str;
+				}
 		default: {
 			std::cout << obj->type_ << std::endl;
 			std::cerr << "cannot write unknown type" << std::endl;

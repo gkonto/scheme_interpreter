@@ -27,6 +27,13 @@ class Test_SchemeInterpreter
 			_test("#\\\n", "#\\newline");
 			_test("#\\space", "#\\space");
 			_test("#\\ ", "#\\space");
+
+			//string
+			_test("\"asdf\"", "\"asdf\"");
+			_test("\"asdf\\\"asdf\"", "\"asdf\\\"asdf\"");
+			_test("\"asdf\\n\"", "\"asdf\\n\"");
+			_test("\"asdf\n\"", "\"asdf\\n\"");
+
 		}
 
 		~Test_SchemeInterpreter()

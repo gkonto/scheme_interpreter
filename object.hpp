@@ -12,21 +12,26 @@ enum ObjectType
 	TT_FIXNUM,
 	TT_BOOLEAN,
 	TT_CHARACTER,
+	TT_STRING,
 
 	TT_MAX
 };
 
+//TODO make it class
 struct Object 
 {
-	explicit Object(long value, ObjectType type) : long_value_(value), type_(type) {}
-	explicit Object(bool value, ObjectType type) : bool_value_(value), type_(type) {}
-	explicit Object(char value, ObjectType type) : char_value_(value), type_(type) {}
+	explicit Object(const long value, ObjectType type) : long_value_(value), type_(type) {}
+	explicit Object(const bool value, ObjectType type) : bool_value_(value), type_(type) {}
+	explicit Object(const char value, ObjectType type) : char_value_(value), type_(type) {}
+	explicit Object(const std::string &value, ObjectType type) : str_value_(value), type_(type) {}
 
+	//TODO make private
 	union
 	{
 		long long_value_;
 		bool bool_value_;
 		char char_value_;
+		std::string str_value_;
 	};
 	ObjectType type_;
 };
@@ -40,6 +45,8 @@ bool is_boolean(Object *obj);
 bool is_false(Object *obj);
 bool is_true(Object *obj);
 bool is_fixnum(Object *obj);
+bool is_char(Object *obj);
+bool is_string(Object *obj);
 Object *read(std::istream &in);
 
 
