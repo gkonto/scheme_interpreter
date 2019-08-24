@@ -11,6 +11,101 @@ Object *false_obj = 0;
 Object *true_obj  = 0;
 Object *the_empty_list = 0;
 
+Object *car(Object *pair)
+{
+	return pair->pair.car;
+}
+
+void set_car(Object *pair, Object *value)
+{
+	pair->pair.car = value;
+}
+
+Object *cdr(Object *pair)
+{
+	return pair->pair.cdr;
+}
+
+void set_cdr(Object *pair, Object *value)
+{
+	pair->pair.cdr = value;
+}
+
+#define caar(obj)   car(car(obj))
+#define cadr(obj)   car(cdr(obj))
+#define cdar(obj)   cdr(car(obj))
+#define cddr(obj)   cdr(cdr(obj))
+#define caaar(obj)  car(car(car(obj)))
+#define caadr(obj)  car(car(cdr(obj)))
+#define cadar(obj)  car(cdr(car(obj)))
+#define caddr(obj)  car(cdr(cdr(obj)))
+#define cdaar(obj)  cdr(car(car(obj)))
+#define cdadr(obj)  cdr(car(cdr(obj)))
+#define cddar(obj)  cdr(cdr(car(obj)))
+#define cdddr(obj)  cdr(cdr(cdr(obj)))
+#define caaaar(obj) car(car(car(car(obj))))
+#define caaadr(obj) car(car(car(cdr(obj))))
+#define caadar(obj) car(car(cdr(car(obj))))
+#define caaddr(obj) car(car(cdr(cdr(obj))))
+#define cadaar(obj) car(cdr(car(car(obj))))
+#define cadadr(obj) car(cdr(car(cdr(obj))))
+#define caddar(obj) car(cdr(cdr(car(obj))))
+#define cadddr(obj) car(cdr(cdr(cdr(obj))))
+#define cdaaar(obj) cdr(car(car(car(obj))))
+#define cdaadr(obj) cdr(car(car(cdr(obj))))
+#define cdadar(obj) cdr(car(cdr(car(obj))))
+#define cdaddr(obj) cdr(car(cdr(cdr(obj))))
+#define cddaar(obj) cdr(cdr(car(car(obj))))
+#define cddadr(obj) cdr(cdr(car(cdr(obj))))
+#define cdddar(obj) cdr(cdr(cdr(car(obj))))
+#define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
+
+
+Object *read_pair(std::istream &in)
+{
+	Object *car;
+	Object *cdr;
+
+	eat_whitespace(in);
+
+	int c = in.get();
+	if (c == ')') {
+		return the_empty_list;
+	}
+	in.unget();
+
+	car = read(in);
+
+	eat_whitespace(in);
+	
+	c = in.get();
+	if (c == '.') {
+		c = in.peek();
+		if (!is_delimiter(c)) {
+			std::cerr << "dot not followed by delimiter" << std::endl;
+			exit(1);
+		}
+		cdr = read(in);
+		eat_whitespace(in);
+		c = in.get();
+		if (c != ')') {
+			std::cerr << "where was the trailing right paren?" << std::endl;
+			exit(1);
+		}
+		return new Object(car, cdr);
+	} else {
+		in.unget();
+		cdr = read_pair(in);
+		return new Object(car, cdr);
+	}
+}
+
+
+bool is_pair(Object *obj)
+{
+	return obj->type_ == TT_PAIR;
+}
+
 bool is_boolean(Object *obj)
 {
 	return obj->type_ == TT_BOOLEAN;
@@ -217,18 +312,10 @@ Object *read(std::istream &in)
 		return new Object(str, TT_STRING);
 
 	} else if (c == '(') {
-		eat_whitespace(in);
-		c = in.get();
-		if (c == ')') {
-			return the_empty_list;
-		} else {
-			char i = c;	
-			std::cerr << "unexpected character " << i << ". Expecting ')' " << std::endl;
-		}
-
+		return read_pair(in);
 	} else {
-		std::cerr << "bab input. Unexpected" << (char)c << std::endl;
-		exit(1);
+		char i = c;	
+		std::cerr << "unexpected character " << i << ". Expecting ')' " << std::endl;
 	}
 
 	std::cerr <<  "read illegal state" << std::endl;
@@ -244,6 +331,27 @@ Object *eval(Object *exp)
 }
 
 /**************************** PRINT ******************************/
+std::string write_pair(Object *pair)
+{
+	Object *car_obj;
+	Object *cdr_obj;
+	car_obj = car(pair);
+	cdr_obj = cdr(pair);
+
+	std::string ret;
+
+	ret += write(car_obj);
+	if (cdr_obj->type_ == TT_PAIR) {
+		ret += " ";
+		ret += write_pair(cdr_obj);
+	} else if (cdr_obj->type_ == TT_THE_EMPTY_LIST) {
+		return ret;
+	} else {
+		ret += " . ";
+		ret += write(cdr_obj);
+	}
+	return ret;
+}
 
 std::string write(Object *obj)
 {
@@ -283,6 +391,12 @@ std::string write(Object *obj)
 					std::string str = obj->str_value_;
 					return str;
 				}
+		case TT_PAIR: {
+				      std::string ret = "(";
+				      ret += write_pair(obj);
+				      ret += ")";
+				      return ret;
+				      }
 		default: {
 			std::cout << obj->type_ << std::endl;
 			std::cerr << "cannot write unknown type" << std::endl;

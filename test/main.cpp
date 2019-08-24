@@ -37,6 +37,12 @@ class Test_SchemeInterpreter
 			//empty list
 			_test("()", "()");
 
+			//pairs
+			_test("(0 . 1)", "(0 . 1)");
+			_test("(0 1)", "(0 1)");
+			_test("(0 . (1 . ()))", "(0 1)");
+			_test("(0 . (1 . 2))", "(0 1 . 2)");
+
 		}
 
 		~Test_SchemeInterpreter()
