@@ -42,6 +42,9 @@ class Test_SchemeInterpreter
 			_test("(0 1)", "(0 1)");
 			_test("(0 . (1 . ()))", "(0 1)");
 			_test("(0 . (1 . 2))", "(0 1 . 2)");
+			
+			//symbols
+			_test("asdf", "asdf");
 
 		}
 

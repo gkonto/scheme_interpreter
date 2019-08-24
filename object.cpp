@@ -9,7 +9,32 @@
 /**************************** MODEL ******************************/
 Object *false_obj = 0;
 Object *true_obj  = 0;
+Object *symbol_table = 0;
 Object *the_empty_list = 0;
+
+Object *make_symbol(const std::string &value)
+{
+	Object *element = symbol_table;
+
+	while (!is_the_empty_list(element)) {
+		Object *car_obj = car(element);
+		if (!car_obj->str_value_.compare(value)) {
+			return car_obj;
+		}
+		element = cdr(element);
+	};
+	Object *obj = new Object(value, TT_SYMBOL);
+
+	//TODO make public member that adds to symbol table
+	symbol_table = new Object(obj, symbol_table);
+
+	return obj;
+}
+
+bool is_symbol(Object *obj)
+{
+	return obj->type_ == TT_SYMBOL;
+}
 
 Object *car(Object *pair)
 {
@@ -146,6 +171,12 @@ bool is_string(Object *obj)
 	return obj->type_ == TT_STRING;
 }
 
+char is_initial(int c)
+{
+    return isalpha(c) || c == '*' || c == '/' || c == '>' ||
+             c == '<' || c == '=' || c == '?' || c == '!';
+}
+
 
 /*****************************************************************/
 void init(void)
@@ -153,6 +184,7 @@ void init(void)
 	false_obj = new Object(false, TT_BOOLEAN);
 	true_obj  = new Object(true, TT_BOOLEAN);
 	the_empty_list = new Object(TT_THE_EMPTY_LIST);
+	symbol_table = the_empty_list;
 }
 /***************************** READ ******************************/
 
@@ -242,6 +274,7 @@ Object *read(std::istream &in)
 {
 	short sign = 1;
 	long num = 0;
+	std::string buffer;
 
 	eat_whitespace(in);
 
@@ -279,6 +312,22 @@ Object *read(std::istream &in)
 		} else {
 			std::cerr << "number not followed by delimiter" << std::endl;
 			exit(1);
+		}
+	} else if (is_initial(c) || 
+		((c == '+' || c == '-')
+		 && is_delimiter(in.peek())))
+	{
+		while (is_initial(c) || isdigit(c) || c == '+' || c == '-') {
+			buffer += c;
+			c = in.get();
+		}
+		if (is_delimiter(c)) {
+			in.unget();
+			return make_symbol(buffer);
+		} else {
+			char i = c;
+			std::cerr << "symbol not followed by delimiter. "
+				"Found " << i << std::endl;
 		}
 	} else if (c == '"') { 
 		std::string str;
@@ -365,6 +414,9 @@ std::string write(Object *obj)
 		case TT_FIXNUM: {
 			ss << obj->long_value_;
 			return ss.str();
+		}
+		case TT_SYMBOL: {
+			return obj->str_value_;
 		}
 		case TT_BOOLEAN: {
 			std::string val = is_false(obj) ? "#f" : "#t";

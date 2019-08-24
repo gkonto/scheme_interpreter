@@ -14,6 +14,7 @@ enum ObjectType
 	TT_CHARACTER,
 	TT_STRING,
 	TT_THE_EMPTY_LIST,
+	TT_SYMBOL,
 	TT_PAIR,
 
 	TT_MAX
@@ -57,6 +58,7 @@ struct Object
 extern Object *false_obj;
 extern Object *true_obj; 
 extern Object *the_empty_list;
+extern Object *symbol_table;
 
 
 // Object callbacks
@@ -66,6 +68,8 @@ bool is_true(Object *obj);
 bool is_fixnum(Object *obj);
 bool is_char(Object *obj);
 bool is_string(Object *obj);
+bool is_symbol(Object *obj);
+char is_initial(int c);
 bool is_the_empty_list(Object *obj);
 
 //pair
@@ -88,6 +92,10 @@ Object *eval(Object *exp);
 std::string write(Object *obj);
 //TODO make static
 std::string write_pair(Object *obj);
+
+
+//TODO make symbol table e separate class
+Object *make_symbol(const std::string &value);
 
 
 #endif
