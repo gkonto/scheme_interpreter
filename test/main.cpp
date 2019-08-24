@@ -34,6 +34,9 @@ class Test_SchemeInterpreter
 			_test("\"asdf\\n\"", "\"asdf\\n\"");
 			_test("\"asdf\n\"", "\"asdf\\n\"");
 
+			//empty list
+			_test("()", "()");
+
 		}
 
 		~Test_SchemeInterpreter()

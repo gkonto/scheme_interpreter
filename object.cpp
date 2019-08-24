@@ -9,10 +9,16 @@
 /**************************** MODEL ******************************/
 Object *false_obj = 0;
 Object *true_obj  = 0;
+Object *the_empty_list = 0;
 
 bool is_boolean(Object *obj)
 {
 	return obj->type_ == TT_BOOLEAN;
+}
+
+bool is_the_empty_list(Object *obj)
+{
+	return obj == the_empty_list;
 }
 
 /*****************************************************************/
@@ -51,6 +57,7 @@ void init(void)
 {
 	false_obj = new Object(false, TT_BOOLEAN);
 	true_obj  = new Object(true, TT_BOOLEAN);
+	the_empty_list = new Object(TT_THE_EMPTY_LIST);
 }
 /***************************** READ ******************************/
 
@@ -209,6 +216,16 @@ Object *read(std::istream &in)
 		str += '"';
 		return new Object(str, TT_STRING);
 
+	} else if (c == '(') {
+		eat_whitespace(in);
+		c = in.get();
+		if (c == ')') {
+			return the_empty_list;
+		} else {
+			char i = c;	
+			std::cerr << "unexpected character " << i << ". Expecting ')' " << std::endl;
+		}
+
 	} else {
 		std::cerr << "bab input. Unexpected" << (char)c << std::endl;
 		exit(1);
@@ -234,6 +251,9 @@ std::string write(Object *obj)
 
 	switch (obj->type_)
 	{
+		case TT_THE_EMPTY_LIST: {
+			return "()";
+		}
 		case TT_FIXNUM: {
 			ss << obj->long_value_;
 			return ss.str();

@@ -13,6 +13,7 @@ enum ObjectType
 	TT_BOOLEAN,
 	TT_CHARACTER,
 	TT_STRING,
+	TT_THE_EMPTY_LIST,
 
 	TT_MAX
 };
@@ -24,6 +25,7 @@ struct Object
 	explicit Object(const bool value, ObjectType type) : bool_value_(value), type_(type) {}
 	explicit Object(const char value, ObjectType type) : char_value_(value), type_(type) {}
 	explicit Object(const std::string &value, ObjectType type) : str_value_(value), type_(type) {}
+	explicit Object(ObjectType type) : type_(type) {}
 
 	//TODO make private
 	union
@@ -38,6 +40,7 @@ struct Object
 
 extern Object *false_obj;
 extern Object *true_obj; 
+extern Object *the_empty_list;
 
 
 // Object callbacks
@@ -47,6 +50,7 @@ bool is_true(Object *obj);
 bool is_fixnum(Object *obj);
 bool is_char(Object *obj);
 bool is_string(Object *obj);
+bool is_the_empty_list(Object *obj);
 Object *read(std::istream &in);
 
 
