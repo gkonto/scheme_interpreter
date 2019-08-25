@@ -7,11 +7,16 @@
 #include "object.hpp"
 
 /**************************** MODEL ******************************/
-Object *false_obj = 0;
-Object *true_obj  = 0;
-Object *symbol_table = 0;
-Object *the_empty_list = 0;
-Object *quote_symbol = 0;
+Object *false_obj              = 0;
+Object *true_obj               = 0;
+Object *symbol_table           = 0;
+Object *the_empty_list         = 0;
+Object *quote_symbol           = 0;
+Object *define_symbol          = 0;
+Object *set_symbol             = 0;
+Object *ok_symbol              = 0;
+Object *the_empty_environment  = 0;
+Object *the_global_environment = 0;
 
 Object *make_symbol(const std::string &value)
 {
@@ -85,6 +90,115 @@ void set_cdr(Object *pair, Object *value)
 #define cddadr(obj) cdr(cdr(car(cdr(obj))))
 #define cdddar(obj) cdr(cdr(cdr(car(obj))))
 #define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
+
+static Object *enclosing_environment(Object *env)
+{
+	return cdr(env);
+}
+
+static Object *first_frame(Object *env)
+{
+	return car(env);
+}
+
+static Object *make_frame(Object *variables, Object *values) {
+    return new Object(variables, values);
+}
+
+static Object *frame_variables(Object *frame) {
+    return car(frame);
+}
+
+static Object *frame_values(Object *frame) {
+    return cdr(frame);
+}
+
+static void add_binding_to_frame(Object *var, Object *val, 
+                          Object *frame) {
+    set_car(frame, new Object(var, car(frame)));
+    set_cdr(frame, new Object(val, cdr(frame)));
+}
+
+static Object *extend_environment(Object *vars, Object *vals,
+                           Object *base_env) {
+    return new Object(make_frame(vars, vals), base_env);
+}
+
+static Object *lookup_variable_value(Object *var, Object *env) {
+    Object *frame;
+    Object *vars;
+    Object *vals;
+    while (!is_the_empty_list(env)) {
+        frame = first_frame(env);
+        vars = frame_variables(frame);
+        vals = frame_values(frame);
+        while (!is_the_empty_list(vars)) {
+            if (var == car(vars)) {
+                return car(vals);
+            }
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+        env = enclosing_environment(env);
+    }
+    std::cerr << "unbound variable" << std::endl;
+    exit(1);
+}
+
+static void set_variable_value(Object *var, Object *val, Object *env) {
+    Object *frame;
+    Object *vars;
+    Object *vals;
+
+    while (!is_the_empty_list(env)) {
+        frame = first_frame(env);
+        vars = frame_variables(frame);
+        vals = frame_values(frame);
+        while (!is_the_empty_list(vars)) {
+            if (var == car(vars)) {
+                set_car(vals, val);
+                return;
+            }
+            vars = cdr(vars);
+            vals = cdr(vals);
+        }
+        env = enclosing_environment(env);
+    }
+    std::cerr << "unbound variable" << std::endl;
+    exit(1);
+}
+
+static void define_variable(Object *var, Object *val, Object *env) {
+    Object *frame;
+    Object *vars;
+    Object *vals;
+    
+    frame = first_frame(env);    
+    vars = frame_variables(frame);
+    vals = frame_values(frame);
+
+    while (!is_the_empty_list(vars)) {
+        if (var == car(vars)) {
+            set_car(vals, val);
+            return;
+        }
+        vars = cdr(vars);
+        vals = cdr(vals);
+    }
+    add_binding_to_frame(var, val, frame);
+}
+
+static Object *setup_environment(void) {
+    Object *initial_env;
+    
+    initial_env = extend_environment(
+                      the_empty_list,
+                      the_empty_list,
+                      the_empty_environment);
+    return initial_env;
+}
+
+
 
 
 Object *read_pair(std::istream &in)
@@ -187,6 +301,11 @@ void init(void)
 	the_empty_list = new Object(TT_THE_EMPTY_LIST);
 	symbol_table = the_empty_list;
 	quote_symbol = make_symbol("quote");
+	define_symbol = make_symbol("define");
+	set_symbol   = make_symbol("set!");
+	ok_symbol    = make_symbol("ok");
+	the_empty_environment = the_empty_list;
+	the_global_environment = setup_environment();
 }
 /***************************** READ ******************************/
 
@@ -261,8 +380,7 @@ Object *read_character(std::istream &in)
 				eat_expected_string(in, "ewline");
 				peek_expected_delimiter(in);
 				return new Object('\n', TT_CHARACTER);
-			}
-			break;
+			} break;
 	}
 	peek_expected_delimiter(in);
 
@@ -385,6 +503,11 @@ static bool is_self_evaluating(Object *exp)
 		is_string(exp);
 }
 
+static bool is_variable(Object *expression)
+{
+	return is_symbol(expression);
+}
+
 static bool is_tagged_list(Object *expression, Object *tag)
 {
 	if (is_pair(expression)) {
@@ -399,20 +522,77 @@ static bool is_quoted(Object *expression)
 	return is_tagged_list(expression, quote_symbol);
 }
 
+
+
 static Object *text_of_quotation(Object *exp)
 {
 	return cadr(exp);
 }
 
+static bool  is_assignment(Object *exp)
+{
+    return is_tagged_list(exp, set_symbol);
+}
+
+static Object *assignment_variable(Object *exp) 
+{
+    return car(cdr(exp));
+}
+
+static Object *assignment_value(Object *exp)
+{
+    return car(cdr(cdr(exp)));
+}
+
+static char is_definition(Object *exp)
+{
+    return is_tagged_list(exp, define_symbol);
+}
+
+static Object *definition_variable(Object *exp)
+{
+    return cadr(exp);
+}
+
+static Object *definition_value(Object *exp) 
+{
+    return caddr(exp);
+}
+
+
+Object *eval(Object *exp, Object *env);
+
+static Object *eval_assignment(Object *exp, Object *env)
+{
+    set_variable_value(assignment_variable(exp),
+                       eval(assignment_value(exp), env),
+                       env);
+    return ok_symbol;
+}
+
+static Object *eval_definition(Object *exp, Object *env)
+{
+    define_variable(definition_variable(exp),
+                    eval(definition_value(exp), env),
+                    env);
+    return ok_symbol;
+}
+
+
+
 /* until we have lists and symbols just echo */
-Object *eval(Object *exp)
+Object *eval(Object *exp, Object *env)
 {
 	if (is_self_evaluating(exp)) {
-
 		return exp;
+	} else if (is_variable(exp)) {
+		return lookup_variable_value(exp, env);
 	} else if (is_quoted(exp)) {
-
 		return text_of_quotation(exp);
+	} else if (is_assignment(exp)) {
+		return eval_assignment(exp, env);
+	} else if (is_definition(exp)) {
+		return eval_definition(exp, env);
 	} else {
 		std::cerr << "cannot eval unknown expression type" << std::endl;
 		exit(1);

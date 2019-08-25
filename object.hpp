@@ -60,6 +60,12 @@ extern Object *true_obj;
 extern Object *the_empty_list;
 extern Object *symbol_table;
 extern Object *quote_symbol;
+extern Object *set_symbol;
+extern Object *ok_symbol;
+extern Object *the_empty_environment;
+extern Object *the_global_environment;
+
+
 
 
 // Object callbacks
@@ -88,7 +94,7 @@ void init(void);
 char is_delimiter(int c);
 void eat_whitespace(std::istream &in);
 
-Object *eval(Object *exp);
+Object *eval(Object *exp, Object *env);
 
 std::string write(Object *obj);
 //TODO make static

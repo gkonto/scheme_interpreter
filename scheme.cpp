@@ -19,7 +19,7 @@ int main(void)
 		// That is, if input is "          Hello World!          ",
 		// in iostream will be stored: "Hello"
 		// That is, no eat_whitespace is needed.
-		std::cout << write(eval(read(std::cin))) << std::endl;
+		std::cout << write(eval(read(std::cin), the_global_environment)) << std::endl;
 	} /* while  */
 
 	return 0;

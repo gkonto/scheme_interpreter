@@ -63,6 +63,14 @@ class Test_SchemeInterpreter
 			_test("'\"asdf\"", "\"asdf\"");
 			_test("\"asdf\"", "\"asdf\"");
 
+
+			_test("(define a 0)", "ok");
+			_test("a", "0");
+			_test("(set! a 1)", "ok");
+			_test("a", "1");
+			_test("(define a 2)", "ok");
+			_test("a", "2");
+			//_test("(set! b 3)", "unbound variable");
 		}
 
 		~Test_SchemeInterpreter()
@@ -77,7 +85,7 @@ class Test_SchemeInterpreter
 		{
 			std::istringstream it(input);
 			std::cout << "[+] Test: " << input << std::endl;
-			std::string got = write(eval(read(it)));
+			std::string got = write(eval(read(it), the_global_environment));
 			if (expecting.compare(got)) {
 				std::cout << "Error in test!" << std::endl;
 				std::cout << "Input    : " << input << std::endl;
