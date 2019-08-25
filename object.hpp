@@ -55,6 +55,7 @@ struct Object
 	ObjectType type_;
 };
 
+// OBJECT DECLARATIONS 
 extern Object *false_obj;
 extern Object *true_obj; 
 extern Object *the_empty_list;
@@ -64,6 +65,7 @@ extern Object *set_symbol;
 extern Object *ok_symbol;
 extern Object *the_empty_environment;
 extern Object *the_global_environment;
+extern Object *if_symbol;
 
 
 

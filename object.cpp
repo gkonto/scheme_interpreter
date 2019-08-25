@@ -17,6 +17,7 @@ Object *set_symbol             = 0;
 Object *ok_symbol              = 0;
 Object *the_empty_environment  = 0;
 Object *the_global_environment = 0;
+Object *if_symbol              = 0;
 
 Object *make_symbol(const std::string &value)
 {
@@ -306,6 +307,7 @@ void init(void)
 	ok_symbol    = make_symbol("ok");
 	the_empty_environment = the_empty_list;
 	the_global_environment = setup_environment();
+	if_symbol = make_symbol("if");
 }
 /***************************** READ ******************************/
 
@@ -559,6 +561,33 @@ static Object *definition_value(Object *exp)
     return caddr(exp);
 }
 
+static bool is_if(Object *expression)
+{
+	return is_tagged_list(expression, if_symbol);
+}
+
+//'if' symbol specific
+static Object *if_predicate(Object *exp)
+{
+	return cadr(exp);
+}
+
+//'if' symbol specific
+static Object *if_consequent(Object *exp)
+{
+	return caddr(exp);
+}
+
+//'if' symbol specific
+static Object *if_alternative(Object *exp)
+{
+	if (is_the_empty_list(cdddr(exp))) {
+		return false_obj;
+	} else {
+		return cadddr(exp);
+	}
+}
+
 
 Object *eval(Object *exp, Object *env);
 
@@ -583,6 +612,7 @@ static Object *eval_definition(Object *exp, Object *env)
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp, Object *env)
 {
+tailcall:
 	if (is_self_evaluating(exp)) {
 		return exp;
 	} else if (is_variable(exp)) {
@@ -593,6 +623,11 @@ Object *eval(Object *exp, Object *env)
 		return eval_assignment(exp, env);
 	} else if (is_definition(exp)) {
 		return eval_definition(exp, env);
+	} else if (is_if(exp)) {
+		exp = is_true(eval(if_predicate(exp), env)) ? if_consequent(exp) : if_alternative(exp);
+		//TODO return eval(exp, env) ?
+		goto tailcall;
+
 	} else {
 		std::cerr << "cannot eval unknown expression type" << std::endl;
 		exit(1);

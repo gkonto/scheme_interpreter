@@ -64,6 +64,7 @@ class Test_SchemeInterpreter
 			_test("\"asdf\"", "\"asdf\"");
 
 
+			//environments
 			_test("(define a 0)", "ok");
 			_test("a", "0");
 			_test("(set! a 1)", "ok");
@@ -71,6 +72,14 @@ class Test_SchemeInterpreter
 			_test("(define a 2)", "ok");
 			_test("a", "2");
 			//_test("(set! b 3)", "unbound variable");
+			
+			//if
+			_test("(if #t 1 2)", "1");
+			_test("(if #t 'a 'b)", "a");
+			_test("(if #f 1 2)", "2");
+			_test("(if #t 1)", "1");
+			_test("(if #f 1)", "#f");
+			_test("(if 0 1 2)", "1");
 		}
 
 		~Test_SchemeInterpreter()
