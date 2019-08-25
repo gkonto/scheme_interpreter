@@ -11,6 +11,7 @@ Object *false_obj = 0;
 Object *true_obj  = 0;
 Object *symbol_table = 0;
 Object *the_empty_list = 0;
+Object *quote_symbol = 0;
 
 Object *make_symbol(const std::string &value)
 {
@@ -185,6 +186,7 @@ void init(void)
 	true_obj  = new Object(true, TT_BOOLEAN);
 	the_empty_list = new Object(TT_THE_EMPTY_LIST);
 	symbol_table = the_empty_list;
+	quote_symbol = make_symbol("quote");
 }
 /***************************** READ ******************************/
 
@@ -362,6 +364,8 @@ Object *read(std::istream &in)
 
 	} else if (c == '(') {
 		return read_pair(in);
+	} else if (c == '\'') {
+		return new Object(quote_symbol, new Object(read(in), the_empty_list));
 	} else {
 		char i = c;	
 		std::cerr << "unexpected character " << i << ". Expecting ')' " << std::endl;
@@ -373,10 +377,48 @@ Object *read(std::istream &in)
 
 /*************************** EVALUATE ****************************/
 
+static bool is_self_evaluating(Object *exp)
+{
+	return is_boolean(exp) ||
+		is_fixnum(exp) ||
+		is_character(exp) ||
+		is_string(exp);
+}
+
+static bool is_tagged_list(Object *expression, Object *tag)
+{
+	if (is_pair(expression)) {
+		Object *the_car = car(expression);
+		return is_symbol(the_car) && (the_car == tag);
+	}
+	return 0;
+}
+
+static bool is_quoted(Object *expression)
+{
+	return is_tagged_list(expression, quote_symbol);
+}
+
+static Object *text_of_quotation(Object *exp)
+{
+	return cadr(exp);
+}
+
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp)
 {
-	return exp;
+	if (is_self_evaluating(exp)) {
+
+		return exp;
+	} else if (is_quoted(exp)) {
+
+		return text_of_quotation(exp);
+	} else {
+		std::cerr << "cannot eval unknown expression type" << std::endl;
+		exit(1);
+	}
+	std::cerr << "eval illegal state" << std::endl;
+	exit(1);
 }
 
 /**************************** PRINT ******************************/
@@ -450,7 +492,6 @@ std::string write(Object *obj)
 				      return ret;
 				      }
 		default: {
-			std::cout << obj->type_ << std::endl;
 			std::cerr << "cannot write unknown type" << std::endl;
 			exit(1);
 		}

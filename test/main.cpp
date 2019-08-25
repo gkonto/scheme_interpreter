@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -34,6 +33,9 @@ class Test_SchemeInterpreter
 			_test("\"asdf\\n\"", "\"asdf\\n\"");
 			_test("\"asdf\n\"", "\"asdf\\n\"");
 
+			
+			/*
+			 * Invalid tests after 'quote' support
 			//empty list
 			_test("()", "()");
 
@@ -45,6 +47,21 @@ class Test_SchemeInterpreter
 			
 			//symbols
 			_test("asdf", "asdf");
+			*/
+
+			//quotes
+			_test("(quote a)", "a");
+			_test("'a", "a");
+			_test("(quote (0 1 2))", "(0 1 2)");
+			_test("'(0 1 2)", "(0 1 2)");
+			_test("'()", "()");
+			_test("'#t", "#t");
+			_test("'123", "123");
+			_test("123", "123");
+			_test("'#\\c", "#\\c");
+			_test("#\\c", "#\\c");
+			_test("'\"asdf\"", "\"asdf\"");
+			_test("\"asdf\"", "\"asdf\"");
 
 		}
 

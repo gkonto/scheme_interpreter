@@ -59,6 +59,7 @@ extern Object *false_obj;
 extern Object *true_obj; 
 extern Object *the_empty_list;
 extern Object *symbol_table;
+extern Object *quote_symbol;
 
 
 // Object callbacks
