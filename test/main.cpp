@@ -80,6 +80,11 @@ class Test_SchemeInterpreter
 			_test("(if #t 1)", "1");
 			_test("(if #f 1)", "#f");
 			_test("(if 0 1 2)", "1");
+
+			//primitive procedures
+			_test("(+ 1 2 3)", "6");
+			_test("(+ 3 -1)", "2");
+			_test("+", "#<procedure>");
 		}
 
 		~Test_SchemeInterpreter()

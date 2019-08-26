@@ -125,14 +125,13 @@ static Object *extend_environment(Object *vars, Object *vals,
     return new Object(make_frame(vars, vals), base_env);
 }
 
-static Object *lookup_variable_value(Object *var, Object *env) {
-    Object *frame;
-    Object *vars;
-    Object *vals;
+static Object *lookup_variable_value(Object *var, Object *env)
+{
     while (!is_the_empty_list(env)) {
-        frame = first_frame(env);
-        vars = frame_variables(frame);
-        vals = frame_values(frame);
+        Object *frame = first_frame(env);
+        Object *vars = frame_variables(frame);
+        Object *vals = frame_values(frame);
+
         while (!is_the_empty_list(vars)) {
             if (var == car(vars)) {
                 return car(vals);
@@ -146,15 +145,13 @@ static Object *lookup_variable_value(Object *var, Object *env) {
     exit(1);
 }
 
-static void set_variable_value(Object *var, Object *val, Object *env) {
-    Object *frame;
-    Object *vars;
-    Object *vals;
-
+static void set_variable_value(Object *var, Object *val, Object *env) 
+{
     while (!is_the_empty_list(env)) {
-        frame = first_frame(env);
-        vars = frame_variables(frame);
-        vals = frame_values(frame);
+        Object *frame = first_frame(env);
+        Object *vars = frame_variables(frame);
+        Object *vals = frame_values(frame);
+
         while (!is_the_empty_list(vars)) {
             if (var == car(vars)) {
                 set_car(vals, val);
@@ -169,14 +166,11 @@ static void set_variable_value(Object *var, Object *val, Object *env) {
     exit(1);
 }
 
-static void define_variable(Object *var, Object *val, Object *env) {
-    Object *frame;
-    Object *vars;
-    Object *vals;
-    
-    frame = first_frame(env);    
-    vars = frame_variables(frame);
-    vals = frame_values(frame);
+static void define_variable(Object *var, Object *val, Object *env) 
+{
+    Object *frame = first_frame(env);    
+    Object *vars = frame_variables(frame);
+    Object *vals = frame_values(frame);
 
     while (!is_the_empty_list(vars)) {
         if (var == car(vars)) {
@@ -189,10 +183,9 @@ static void define_variable(Object *var, Object *val, Object *env) {
     add_binding_to_frame(var, val, frame);
 }
 
-static Object *setup_environment(void) {
-    Object *initial_env;
-    
-    initial_env = extend_environment(
+static Object *setup_environment(void)
+{
+    Object *initial_env = extend_environment(
                       the_empty_list,
                       the_empty_list,
                       the_empty_environment);
@@ -204,9 +197,6 @@ static Object *setup_environment(void) {
 
 Object *read_pair(std::istream &in)
 {
-	Object *car;
-	Object *cdr;
-
 	eat_whitespace(in);
 
 	int c = in.get();
@@ -215,7 +205,7 @@ Object *read_pair(std::istream &in)
 	}
 	in.unget();
 
-	car = read(in);
+	Object *car = read(in);
 
 	eat_whitespace(in);
 	
@@ -226,7 +216,7 @@ Object *read_pair(std::istream &in)
 			std::cerr << "dot not followed by delimiter" << std::endl;
 			exit(1);
 		}
-		cdr = read(in);
+		Object *cdr = read(in);
 		eat_whitespace(in);
 		c = in.get();
 		if (c != ')') {
@@ -236,7 +226,8 @@ Object *read_pair(std::istream &in)
 		return new Object(car, cdr);
 	} else {
 		in.unget();
-		cdr = read_pair(in);
+
+		Object *cdr = read_pair(in);
 		return new Object(car, cdr);
 	}
 }
@@ -287,10 +278,25 @@ bool is_string(Object *obj)
 	return obj->type_ == TT_STRING;
 }
 
-char is_initial(int c)
+bool is_initial(int c)
 {
     return isalpha(c) || c == '*' || c == '/' || c == '>' ||
              c == '<' || c == '=' || c == '?' || c == '!';
+}
+
+bool is_primitive_proc(Object *obj)
+{
+	return obj->type_ == TT_PRIMITIVE_PROC;
+}
+
+static Object *add_proc(Object *arguments)
+{
+	long result = 0;
+	while(!is_the_empty_list(arguments)) {
+		result += (car(arguments))->long_value_;
+		arguments = cdr(arguments);
+	}
+	return new Object(result, TT_FIXNUM);
 }
 
 
@@ -308,6 +314,10 @@ void init(void)
 	the_empty_environment = the_empty_list;
 	the_global_environment = setup_environment();
 	if_symbol = make_symbol("if");
+
+	define_variable(make_symbol("+"),
+			new Object(add_proc),
+			the_global_environment);
 }
 /***************************** READ ******************************/
 
@@ -589,7 +599,48 @@ static Object *if_alternative(Object *exp)
 }
 
 
+static bool is_application(Object *exp)
+{
+	return is_pair(exp);
+}
+
+static Object *op(Object *exp)
+{
+	return car(exp);
+}
+
+static Object *operands(Object *exp)
+{
+	return cdr(exp);
+}
+
+static bool is_no_operands(Object *ops)
+{
+	return is_the_empty_list(ops);
+}
+
+static Object *first_operand(Object *ops)
+{
+	return car(ops);
+}
+
+static Object *rest_operands(Object *ops)
+{
+	return cdr(ops);
+}
+
+
 Object *eval(Object *exp, Object *env);
+
+Object *list_of_values(Object *exps, Object *env)
+{
+	if (is_no_operands(exps)) {
+		return the_empty_list;
+	} else {
+		return new Object(eval(first_operand(exps), env),
+				list_of_values(rest_operands(exps), env));
+	}
+}
 
 static Object *eval_assignment(Object *exp, Object *env)
 {
@@ -612,6 +663,9 @@ static Object *eval_definition(Object *exp, Object *env)
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp, Object *env)
 {
+	Object *procedure = 0;
+	Object *arguments = 0;
+
 tailcall:
 	if (is_self_evaluating(exp)) {
 		return exp;
@@ -627,7 +681,10 @@ tailcall:
 		exp = is_true(eval(if_predicate(exp), env)) ? if_consequent(exp) : if_alternative(exp);
 		//TODO return eval(exp, env) ?
 		goto tailcall;
-
+	} else if (is_application(exp)) {
+		procedure = eval(op(exp), env);
+		arguments = list_of_values(operands(exp), env);
+		return procedure->fun_(arguments);
 	} else {
 		std::cerr << "cannot eval unknown expression type" << std::endl;
 		exit(1);
@@ -639,10 +696,8 @@ tailcall:
 /**************************** PRINT ******************************/
 std::string write_pair(Object *pair)
 {
-	Object *car_obj;
-	Object *cdr_obj;
-	car_obj = car(pair);
-	cdr_obj = cdr(pair);
+	Object *car_obj = car(pair);
+	Object *cdr_obj = cdr(pair);
 
 	std::string ret;
 
@@ -701,11 +756,13 @@ std::string write(Object *obj)
 					return str;
 				}
 		case TT_PAIR: {
-				      std::string ret = "(";
-				      ret += write_pair(obj);
-				      ret += ")";
-				      return ret;
-				      }
+			      std::string ret = "(";
+			      ret += write_pair(obj);
+			      ret += ")";
+			      return ret;
+		      }
+		case TT_PRIMITIVE_PROC:
+		      return "#<procedure>";
 		default: {
 			std::cerr << "cannot write unknown type" << std::endl;
 			exit(1);

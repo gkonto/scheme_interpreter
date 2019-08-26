@@ -16,6 +16,7 @@ enum ObjectType
 	TT_THE_EMPTY_LIST,
 	TT_SYMBOL,
 	TT_PAIR,
+	TT_PRIMITIVE_PROC,
 
 	TT_MAX
 };
@@ -30,28 +31,65 @@ struct Pair
 //TODO make it class
 struct Object 
 {
-	explicit Object(const long value, ObjectType type) : long_value_(value), type_(type) {}
-	explicit Object(const bool value, ObjectType type) : bool_value_(value), type_(type) {}
-	explicit Object(const char value, ObjectType type) : char_value_(value), type_(type) {}
-	explicit Object(const std::string &value, ObjectType type) : str_value_(value), type_(type) {}
-	explicit Object(ObjectType type) : type_(type) {}
+	//TODO convert to std::function
+	typedef Object *(*PrimitiveProcFun)(struct Object *arguments);
+
+	//TODO ObjectType can be defined implicitly
+	explicit Object(const long value, ObjectType type) : long_value_(value), type_(type)
+       	{
+		//std::cout << "TT_FIXNUM" << std::endl;
+		//printf("Object: %p\n", this);
+	}
+	explicit Object(const bool value, ObjectType type) : bool_value_(value), type_(type) 
+	{
+		//std::cout << "TT_BOOLEAN" << std::endl;
+		//printf("Object: %p\n", this);
+	}
+
+	explicit Object(const char value, ObjectType type) : char_value_(value), type_(type)
+	{
+		//std::cout << "TT_CHARACTER" << std::endl;
+		//printf("Object: %p\n", this);
+	}
+
+	explicit Object(const std::string &value, ObjectType type) : str_value_(value), type_(type)
+	{
+		//std::cout << "TT_STRING" << std::endl;
+		//printf("Object: %p\n", this);
+	}
+
+	explicit Object(ObjectType type) : type_(type)
+	{
+		//std::cout << "TT_THE_EMPTY_LIST" << std::endl;
+		//printf("Object: %p\n", this);
+	}
+	
+	explicit Object(PrimitiveProcFun fun) : fun_(fun), type_(TT_PRIMITIVE_PROC)
+	{
+		//std::cout << "TT_PRIMITIVE_PROC" << std::endl;
+		//printf("Object: %p\n", this);
+	}
 
 	explicit Object(Object *car, Object *cdr) : type_(TT_PAIR)
 	{
+		//std::cout << "TT_PAIR" << std::endl;
+		//printf("Object: %p\n", this);
 		pair.car = car;
 		pair.cdr = cdr;
 	}
 
+
+
 	//TODO make private
-	union
-	{
+	union {
 		long long_value_;
 		bool bool_value_;
 		char char_value_;
 		std::string str_value_;
 		Pair pair;
-
+		PrimitiveProcFun fun_;
 	};
+
 	ObjectType type_;
 };
 
@@ -78,8 +116,10 @@ bool is_fixnum(Object *obj);
 bool is_char(Object *obj);
 bool is_string(Object *obj);
 bool is_symbol(Object *obj);
-char is_initial(int c);
+bool is_initial(int c);
 bool is_the_empty_list(Object *obj);
+bool is_primitive_proc(Object *obj);
+
 
 //pair
 bool is_pair(Object *obj);
