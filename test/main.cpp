@@ -85,6 +85,10 @@ class Test_SchemeInterpreter
 			_test("(+ 1 2 3)", "6");
 			_test("(+ 3 -1)", "2");
 			_test("+", "#<procedure>");
+			_test("(boolean? #t)", "#t");
+			_test("(integer->char 99)", "#\\c");
+			_test("(< 1 2 3)", "#t");
+			_test("(cons 'a 'b)", "(a . b)");
 		}
 
 		~Test_SchemeInterpreter()

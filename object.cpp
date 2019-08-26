@@ -92,6 +92,12 @@ void set_cdr(Object *pair, Object *value)
 #define cdddar(obj) cdr(cdr(cdr(car(obj))))
 #define cddddr(obj) cdr(cdr(cdr(cdr(obj))))
 
+Object *make_primitive_proc(Object *(*fn)(struct Object *arguments)) 
+{
+    return new Object(fn);
+}
+
+
 static Object *enclosing_environment(Object *env)
 {
 	return cdr(env);
@@ -289,6 +295,82 @@ bool is_primitive_proc(Object *obj)
 	return obj->type_ == TT_PRIMITIVE_PROC;
 }
 
+Object *is_null_proc(Object *arguments)
+{
+    return is_the_empty_list(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_boolean_proc(Object *arguments)
+{
+    return is_boolean(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_symbol_proc(Object *arguments)
+{
+    return is_symbol(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_integer_proc(Object *arguments)
+{
+    return is_fixnum(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_char_proc(Object *arguments) 
+{
+    return is_character(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_string_proc(Object *arguments) 
+{
+    return is_string(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_pair_proc(Object *arguments) 
+{
+    return is_pair(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *is_procedure_proc(Object *arguments) 
+{
+    return is_primitive_proc(car(arguments)) ? true_obj : false_obj;
+}
+
+Object *char_to_integer_proc(Object *arguments) 
+{
+    return new Object((car(arguments))->char_value_, TT_FIXNUM);
+}
+
+Object *integer_to_char_proc(Object *arguments) 
+{
+    return new Object((car(arguments))->char_value_, TT_CHARACTER);
+}
+
+Object *number_to_string_proc(Object *arguments) 
+{
+    std::string buf = std::to_string(car(arguments)->long_value_);
+    return new Object(buf, TT_STRING);
+}
+
+Object *string_to_number_proc(Object *arguments) 
+{
+	long x = 0;
+	std::stringstream ss(car(arguments)->str_value_);
+	ss >> x;
+    return new Object(x, TT_FIXNUM);
+}
+
+Object *symbol_to_string_proc(Object *arguments) 
+{
+    return new Object(car(arguments)->str_value_, TT_STRING);
+}
+
+Object *string_to_symbol_proc(Object *arguments) 
+{
+    return make_symbol((car(arguments))->str_value_);
+}
+
+
+
 static Object *add_proc(Object *arguments)
 {
 	long result = 0;
@@ -298,6 +380,150 @@ static Object *add_proc(Object *arguments)
 	}
 	return new Object(result, TT_FIXNUM);
 }
+
+Object *sub_proc(Object *arguments) 
+{
+    long result;
+    
+    result = car(arguments)->long_value_;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        result -= (car(arguments))->long_value_;
+    }
+    return new Object(result, TT_FIXNUM);
+}
+
+Object *mul_proc(Object *arguments) 
+{
+    long result = 1;
+    
+    while (!is_the_empty_list(arguments)) {
+        result *= (car(arguments))->long_value_;
+        arguments = cdr(arguments);
+    }
+    return new Object(result, TT_FIXNUM);
+}
+
+Object *quotient_proc(Object *arguments) 
+{
+    return new Object(
+        ((car(arguments) )->long_value_)/
+        ((cadr(arguments))->long_value_), TT_FIXNUM);
+}
+
+Object *remainder_proc(Object *arguments) 
+{
+    return new Object(
+        ((car(arguments) )->long_value_)%
+        ((cadr(arguments))->long_value_), TT_FIXNUM);
+}
+
+Object *is_number_equal_proc(Object *arguments) 
+{
+    long value;
+    
+    value = (car(arguments))->long_value_;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        if (value != ((car(arguments))->long_value_)) {
+            return false_obj;
+        }
+    }
+    return true_obj;
+}
+
+Object *is_less_than_proc(Object *arguments) 
+{
+    long previous;
+    long next;
+    
+    previous = (car(arguments))->long_value_;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        next = (car(arguments))->long_value_;
+        if (previous < next) {
+            previous = next;
+        }
+        else {
+            return false_obj;
+        }
+    }
+    return true_obj;
+}
+
+Object *is_greater_than_proc(Object *arguments) 
+{
+    long previous;
+    long next;
+    
+    previous = (car(arguments))->long_value_;
+    while (!is_the_empty_list(arguments = cdr(arguments))) {
+        next = (car(arguments))->long_value_;
+        if (previous > next) {
+            previous = next;
+        }
+        else {
+            return false_obj;
+        }
+    }
+    return true_obj;
+}
+
+
+Object *cons_proc(Object *arguments) {
+    return new Object(car(arguments), cadr(arguments));
+}
+
+Object *car_proc(Object *arguments) {
+    return caar(arguments);
+}
+
+Object *cdr_proc(Object *arguments) {
+    return cdar(arguments);
+}
+
+Object *set_car_proc(Object *arguments) {
+    set_car(car(arguments), cadr(arguments));
+    return ok_symbol;
+}
+
+Object *set_cdr_proc(Object *arguments) {
+    set_cdr(car(arguments), cadr(arguments));
+    return ok_symbol;
+}
+
+Object *list_proc(Object *arguments) {
+    return arguments;
+}
+
+Object *is_eq_proc(Object *arguments) {
+    Object *obj1;
+    Object *obj2;
+    
+    obj1 = car(arguments);
+    obj2 = cadr(arguments);
+    
+    if (obj1->type_ != obj2->type_) {
+        return false_obj;
+    }
+    switch (obj1->type_) {
+        case TT_FIXNUM:
+            return (obj1->long_value_ == 
+                    obj2->long_value_) ?
+                        true_obj : false_obj;
+            break;
+        case TT_CHARACTER:
+            return (obj1->long_value_ == 
+                    obj2->long_value_) ?
+                        true_obj : false_obj;
+            break;
+        case TT_STRING:
+            return (obj1->str_value_.compare(
+                           obj2->str_value_) == 0) ?
+                        true_obj : false_obj;
+            break;
+        default:
+            return (obj1 == obj2) ? true_obj : false_obj;
+    }
+}
+
 
 
 /*****************************************************************/
@@ -318,6 +544,46 @@ void init(void)
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
 			the_global_environment);
+
+#define add_procedure(scheme_name, c_name)              \
+    define_variable(make_symbol(scheme_name),           \
+                    make_primitive_proc(c_name),        \
+                    the_global_environment);
+
+    add_procedure("null?"     , is_null_proc);
+    add_procedure("boolean?"  , is_boolean_proc);
+    add_procedure("symbol?"   , is_symbol_proc);
+    add_procedure("integer?"  , is_integer_proc);
+    add_procedure("char?"     , is_char_proc);
+    add_procedure("string?"   , is_string_proc);
+    add_procedure("pair?"     , is_pair_proc);
+    add_procedure("procedure?", is_procedure_proc);
+    
+    add_procedure("char->integer" , char_to_integer_proc);
+    add_procedure("integer->char" , integer_to_char_proc);
+    add_procedure("number->string", number_to_string_proc);
+    add_procedure("string->number", string_to_number_proc);
+    add_procedure("symbol->string", symbol_to_string_proc);
+    add_procedure("string->symbol", string_to_symbol_proc);
+      
+    add_procedure("+"        , add_proc);
+    add_procedure("-"        , sub_proc);
+    add_procedure("*"        , mul_proc);
+    add_procedure("quotient" , quotient_proc);
+    add_procedure("remainder", remainder_proc);
+    add_procedure("="        , is_number_equal_proc);
+    add_procedure("<"        , is_less_than_proc);
+    add_procedure(">"        , is_greater_than_proc);
+
+    add_procedure("cons"    , cons_proc);
+    add_procedure("car"     , car_proc);
+    add_procedure("cdr"     , cdr_proc);
+    add_procedure("set-car!", set_car_proc);
+    add_procedure("set-cdr!", set_cdr_proc);
+    add_procedure("list"    , list_proc);
+
+    add_procedure("eq?", is_eq_proc);
+
 }
 /***************************** READ ******************************/
 
