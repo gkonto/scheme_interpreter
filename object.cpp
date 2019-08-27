@@ -18,7 +18,11 @@ Object *ok_symbol              = 0;
 Object *the_empty_environment  = 0;
 Object *the_global_environment = 0;
 Object *if_symbol              = 0;
+Object *lambda_symbol              = 0;
 
+
+// TODO code full of memory leaks
+//
 Object *make_symbol(const std::string &value)
 {
 	Object *element = symbol_table;
@@ -330,10 +334,18 @@ Object *is_pair_proc(Object *arguments)
     return is_pair(car(arguments)) ? true_obj : false_obj;
 }
 
+
+bool is_compound_proc(Object *obj);
+
 Object *is_procedure_proc(Object *arguments) 
 {
-    return is_primitive_proc(car(arguments)) ? true_obj : false_obj;
+    Object *obj = car(arguments);
+    return (is_primitive_proc(obj) ||
+            is_compound_proc(obj)) ?
+                true_obj :
+                false_obj;
 }
+
 
 Object *char_to_integer_proc(Object *arguments) 
 {
@@ -342,7 +354,7 @@ Object *char_to_integer_proc(Object *arguments)
 
 Object *integer_to_char_proc(Object *arguments) 
 {
-    return new Object((car(arguments))->char_value_, TT_CHARACTER);
+    return new Object((car(arguments))->long_value_, TT_CHARACTER);
 }
 
 Object *number_to_string_proc(Object *arguments) 
@@ -524,6 +536,18 @@ Object *is_eq_proc(Object *arguments) {
     }
 }
 
+Object *make_compound_proc(Object *parameters, Object *body,
+                           Object* env) 
+{
+    Object *obj = new Object(parameters, body, env);
+    return obj;
+}
+
+bool is_compound_proc(Object *obj) {
+    return obj->type_ == TT_COMPOUND_PROC;
+}
+
+
 
 
 /*****************************************************************/
@@ -540,6 +564,7 @@ void init(void)
 	the_empty_environment = the_empty_list;
 	the_global_environment = setup_environment();
 	if_symbol = make_symbol("if");
+	lambda_symbol = make_symbol("lambda");
 
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
@@ -827,14 +852,15 @@ static char is_definition(Object *exp)
     return is_tagged_list(exp, define_symbol);
 }
 
-static Object *definition_variable(Object *exp)
-{
-    return cadr(exp);
-}
+Object *make_lambda(Object *parameters, Object *body);
 
-static Object *definition_value(Object *exp) 
+Object *definition_value(Object *exp) 
 {
-    return caddr(exp);
+	if (is_symbol(cadr(exp))) {
+		return caddr(exp);
+	} else {
+		return make_lambda(cdadr(exp), cddr(exp));
+	}
 }
 
 static bool is_if(Object *expression)
@@ -864,6 +890,28 @@ static Object *if_alternative(Object *exp)
 	}
 }
 
+Object *make_lambda(Object *parameters, Object *body)
+{
+    return new Object(lambda_symbol, new Object(parameters, body));
+}
+
+
+char is_lambda(Object *exp) {
+    return is_tagged_list(exp, lambda_symbol);
+}
+
+Object *lambda_parameters(Object *exp) {
+    return cadr(exp);
+}
+
+Object *lambda_body(Object *exp) {
+    return cddr(exp);
+}
+
+char is_last_exp(Object *seq) {
+    return is_the_empty_list(cdr(seq));
+}
+
 
 static bool is_application(Object *exp)
 {
@@ -884,6 +932,15 @@ static bool is_no_operands(Object *ops)
 {
 	return is_the_empty_list(ops);
 }
+
+Object *first_exp(Object *seq) {
+    return car(seq);
+}
+
+Object *rest_exps(Object *seq) {
+    return cdr(seq);
+}
+
 
 static Object *first_operand(Object *ops)
 {
@@ -916,6 +973,16 @@ static Object *eval_assignment(Object *exp, Object *env)
     return ok_symbol;
 }
 
+Object *definition_variable(Object *exp) {
+    if (is_symbol(cadr(exp))) {
+        return cadr(exp);
+    }
+    else {
+        return caadr(exp);
+    }
+}
+
+
 static Object *eval_definition(Object *exp, Object *env)
 {
     define_variable(definition_variable(exp),
@@ -923,6 +990,7 @@ static Object *eval_definition(Object *exp, Object *env)
                     env);
     return ok_symbol;
 }
+
 
 
 
@@ -947,10 +1015,35 @@ tailcall:
 		exp = is_true(eval(if_predicate(exp), env)) ? if_consequent(exp) : if_alternative(exp);
 		//TODO return eval(exp, env) ?
 		goto tailcall;
+	} else if (is_lambda(exp)) {
+		return make_compound_proc(lambda_parameters(exp),
+				lambda_body(exp),
+				env);
 	} else if (is_application(exp)) {
+
 		procedure = eval(op(exp), env);
 		arguments = list_of_values(operands(exp), env);
-		return procedure->fun_(arguments);
+		if (is_primitive_proc(procedure)) {
+		    return procedure->fun_(arguments);
+		}
+		else if (is_compound_proc(procedure)) {
+		    env = extend_environment( 
+			       procedure->compound_proc.parameters,
+			       arguments,
+			       procedure->compound_proc.env);
+		    exp = procedure->compound_proc.body;
+		    while (!is_last_exp(exp)) {
+			eval(first_exp(exp), env);
+			exp = rest_exps(exp);
+		    }
+		    exp = first_exp(exp);
+		    goto tailcall;
+		}
+		else {
+		    fprintf(stderr, "unknown procedure type\n");
+		    exit(1);
+		}
+
 	} else {
 		std::cerr << "cannot eval unknown expression type" << std::endl;
 		exit(1);
@@ -1028,6 +1121,7 @@ std::string write(Object *obj)
 			      return ret;
 		      }
 		case TT_PRIMITIVE_PROC:
+		case TT_COMPOUND_PROC:
 		      return "#<procedure>";
 		default: {
 			std::cerr << "cannot write unknown type" << std::endl;

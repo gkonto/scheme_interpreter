@@ -17,6 +17,7 @@ enum ObjectType
 	TT_SYMBOL,
 	TT_PAIR,
 	TT_PRIMITIVE_PROC,
+	TT_COMPOUND_PROC,
 
 	TT_MAX
 };
@@ -25,6 +26,13 @@ struct Pair
 {
 	struct Object *car;
 	struct Object *cdr;
+};
+
+struct CompoundProc
+{
+	struct Object *parameters;
+	struct Object *body;
+	struct Object *env;
 };
 
 
@@ -37,6 +45,8 @@ struct Object
 	//TODO ObjectType can be defined implicitly
 	explicit Object(const long value, ObjectType type) : long_value_(value), type_(type)
        	{
+		if (type == TT_CHARACTER) {
+			char_value_ = value;		}
 		//std::cout << "TT_FIXNUM" << std::endl;
 		//printf("Object: %p\n", this);
 	}
@@ -44,6 +54,14 @@ struct Object
 	{
 		//std::cout << "TT_BOOLEAN" << std::endl;
 		//printf("Object: %p\n", this);
+	}
+
+	explicit Object(Object *parameters, Object *body, Object *env)
+	{
+		type_ = TT_COMPOUND_PROC;
+		compound_proc.parameters = parameters;
+		compound_proc.body = body;
+		compound_proc.env = env;
 	}
 
 	explicit Object(const char value, ObjectType type) : char_value_(value), type_(type)
@@ -81,14 +99,13 @@ struct Object
 
 
 	//TODO make private
-	union {
 		long long_value_;
 		bool bool_value_;
 		char char_value_;
 		std::string str_value_;
 		Pair pair;
 		PrimitiveProcFun fun_;
-	};
+		CompoundProc compound_proc;
 
 	ObjectType type_;
 };
@@ -104,6 +121,7 @@ extern Object *ok_symbol;
 extern Object *the_empty_environment;
 extern Object *the_global_environment;
 extern Object *if_symbol;
+extern Object *lambda_symbol;
 
 
 

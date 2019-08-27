@@ -34,20 +34,18 @@ class Test_SchemeInterpreter
 			_test("\"asdf\n\"", "\"asdf\\n\"");
 
 			
-			/*
-			 * Invalid tests after 'quote' support
+			// * Invalid tests after 'quote' support
 			//empty list
-			_test("()", "()");
+			//_test("()", "()");
 
 			//pairs
-			_test("(0 . 1)", "(0 . 1)");
-			_test("(0 1)", "(0 1)");
-			_test("(0 . (1 . ()))", "(0 1)");
-			_test("(0 . (1 . 2))", "(0 1 . 2)");
+			//_test("(0 . 1)", "(0 . 1)");
+			//_test("(0 1)", "(0 1)");
+			//_test("(0 . (1 . ()))", "(0 1)");
+			//_test("(0 . (1 . 2))", "(0 1 . 2)");
 			
 			//symbols
-			_test("asdf", "asdf");
-			*/
+			//_test("asdf", "asdf");
 
 			//quotes
 			_test("(quote a)", "a");
@@ -89,6 +87,20 @@ class Test_SchemeInterpreter
 			_test("(integer->char 99)", "#\\c");
 			_test("(< 1 2 3)", "#t");
 			_test("(cons 'a 'b)", "(a . b)");
+
+
+			//Lambda
+			_test("(define (map proc items) (if (null? items) '() (cons (proc (car items)) (map proc (cdr items)))))", "ok");
+			_test("(define (double x) (* 2 x))", "ok");
+			_test("(map double '(0 1 2 3))", "(0 2 4 6)");
+			_test("(define count ((lambda (total) (lambda (increment) (set! total (+ total increment)) total)) 0)) ; initial total", "ok");
+			_test("(count 3)", "3");
+			_test("(count 5)", "8");
+			_test("(define (factorial n) (define (iter product counter max-count) (if (> counter max-count) product (iter (* counter product) (+ counter 1) max-count))) (iter 1 1 n))", "ok");
+			_test("(factorial 4)", "24");
+			_test("(define Y (lambda (f) ((lambda (x) (f (lambda (y) ((x x) y)))) (lambda (x) (f (lambda (y) ((x x) y)))))))", "ok");
+			_test("(define factorial (Y (lambda (fact) (lambda (n) (if (= n 0) 1 (* n (fact (- n 1))))))))", "ok");
+			_test("(factorial 5)", "120");
 		}
 
 		~Test_SchemeInterpreter()
