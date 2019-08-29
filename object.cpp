@@ -20,6 +20,8 @@ Object *the_global_environment = 0;
 Object *if_symbol              = 0;
 Object *lambda_symbol          = 0;
 Object *begin_symbol           = 0;
+Object *cond_symbol            = 0;
+Object *else_symbol            = 0;
 
 
 // TODO code full of memory leaks
@@ -567,6 +569,8 @@ void init(void)
 	if_symbol = make_symbol("if");
 	lambda_symbol = make_symbol("lambda");
 	begin_symbol  = make_symbol("begin");
+	cond_symbol   = make_symbol("cond");
+	else_symbol   = make_symbol("else");
 
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
@@ -865,6 +869,89 @@ Object *definition_value(Object *exp)
 	}
 }
 
+
+static bool is_cond(Object *exp) {
+    return is_tagged_list(exp, cond_symbol);
+}
+
+Object *cond_clauses(Object *exp) {
+    return cdr(exp);
+}
+
+Object *cond_predicate(Object *clause) {
+    return car(clause);
+}
+
+Object *cond_actions(Object *clause) {
+    return cdr(clause);
+}
+
+char is_cond_else_clause(Object *clause) {
+    return cond_predicate(clause) == else_symbol;
+}
+
+
+static bool is_last_exp(Object *seq) {
+    return is_the_empty_list(cdr(seq));
+}
+
+static Object *first_exp(Object *seq) {
+    return car(seq);
+}
+
+Object *sequence_to_exp(Object *seq) {
+    if (is_the_empty_list(seq)) {
+        return seq;
+    }
+    else if (is_last_exp(seq)) {
+        return first_exp(seq);
+    }
+    else {
+        return new Object(begin_symbol, seq);
+    }
+}
+
+Object *make_if(Object *predicate, Object *consequent, Object *alternative) 
+{
+    return new Object(if_symbol,
+                new Object(predicate,
+                     new Object(consequent,
+                          new Object(alternative, the_empty_list))));
+}
+
+Object *expand_clauses(Object *clauses) {
+    Object *first;
+    Object *rest;
+    
+    if (is_the_empty_list(clauses)) {
+        return false_obj;
+    }
+    else {
+        first = car(clauses);
+        rest  = cdr(clauses);
+        if (is_cond_else_clause(first)) {
+            if (is_the_empty_list(rest)) {
+                return sequence_to_exp(cond_actions(first));
+            }
+            else {
+                fprintf(stderr, "else clause isn't last cond->if");
+                exit(1);
+            }
+        }
+        else {
+            return make_if(cond_predicate(first),
+                           sequence_to_exp(cond_actions(first)),
+                           expand_clauses(rest));
+        }
+    }
+}
+
+Object *cond_to_if(Object *exp) {
+    return expand_clauses(cond_clauses(exp));
+}
+
+
+
 static bool is_if(Object *expression)
 {
 	return is_tagged_list(expression, if_symbol);
@@ -910,9 +997,6 @@ Object *lambda_body(Object *exp) {
     return cddr(exp);
 }
 
-char is_last_exp(Object *seq) {
-    return is_the_empty_list(cdr(seq));
-}
 
 
 static bool is_application(Object *exp)
@@ -935,9 +1019,6 @@ static bool is_no_operands(Object *ops)
 	return is_the_empty_list(ops);
 }
 
-Object *first_exp(Object *seq) {
-    return car(seq);
-}
 
 Object *rest_exps(Object *seq) {
     return cdr(seq);
@@ -1037,6 +1118,10 @@ tailcall:
 		    exp = rest_exps(exp);
 		}
 		exp = first_exp(exp);
+		goto tailcall;
+
+	} else if (is_cond(exp)) {
+		exp = cond_to_if(exp);
 		goto tailcall;
 
 	} else if (is_application(exp)) {

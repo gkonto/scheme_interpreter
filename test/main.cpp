@@ -103,6 +103,8 @@ class Test_SchemeInterpreter
 			_test("(factorial 5)", "120");
 
 			_test("(begin 1 2 3)", "3");
+
+			_test("(cond (#f   1) ((eq? 'a 'a) 2) (else         3))", "2");
 		}
 
 		~Test_SchemeInterpreter()
