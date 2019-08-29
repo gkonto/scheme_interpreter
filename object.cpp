@@ -18,7 +18,8 @@ Object *ok_symbol              = 0;
 Object *the_empty_environment  = 0;
 Object *the_global_environment = 0;
 Object *if_symbol              = 0;
-Object *lambda_symbol              = 0;
+Object *lambda_symbol          = 0;
+Object *begin_symbol           = 0;
 
 
 // TODO code full of memory leaks
@@ -565,6 +566,7 @@ void init(void)
 	the_global_environment = setup_environment();
 	if_symbol = make_symbol("if");
 	lambda_symbol = make_symbol("lambda");
+	begin_symbol  = make_symbol("begin");
 
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
@@ -993,6 +995,15 @@ static Object *eval_definition(Object *exp, Object *env)
 
 
 
+Object *begin_actions(Object *exp) {
+    return cdr(exp);
+}
+
+char is_begin(Object *exp)
+{
+	return is_tagged_list(exp, begin_symbol);
+}
+
 
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp, Object *env)
@@ -1019,6 +1030,15 @@ tailcall:
 		return make_compound_proc(lambda_parameters(exp),
 				lambda_body(exp),
 				env);
+	} else if (is_begin(exp)) {
+		exp = begin_actions(exp);
+		while (!is_last_exp(exp)) {
+		    eval(first_exp(exp), env);
+		    exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
+		goto tailcall;
+
 	} else if (is_application(exp)) {
 
 		procedure = eval(op(exp), env);
@@ -1031,12 +1051,7 @@ tailcall:
 			       procedure->compound_proc.parameters,
 			       arguments,
 			       procedure->compound_proc.env);
-		    exp = procedure->compound_proc.body;
-		    while (!is_last_exp(exp)) {
-			eval(first_exp(exp), env);
-			exp = rest_exps(exp);
-		    }
-		    exp = first_exp(exp);
+		    exp = new Object(begin_symbol, procedure->compound_proc.body);
 		    goto tailcall;
 		}
 		else {

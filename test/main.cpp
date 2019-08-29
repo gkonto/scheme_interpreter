@@ -101,6 +101,8 @@ class Test_SchemeInterpreter
 			_test("(define Y (lambda (f) ((lambda (x) (f (lambda (y) ((x x) y)))) (lambda (x) (f (lambda (y) ((x x) y)))))))", "ok");
 			_test("(define factorial (Y (lambda (fact) (lambda (n) (if (= n 0) 1 (* n (fact (- n 1))))))))", "ok");
 			_test("(factorial 5)", "120");
+
+			_test("(begin 1 2 3)", "3");
 		}
 
 		~Test_SchemeInterpreter()
