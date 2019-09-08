@@ -117,6 +117,10 @@ class Test_SchemeInterpreter
 			_test("a", "1");
 			_test("(and #t (set! a 2))", "ok");
 			_test("a", "2");
+
+			_test("(apply + '(1 2 3))", "6");
+			_test("(apply + 1 2 '(3))", "6");
+			_test("(apply + 1 2 3 '())", "6");
 		}
 
 		~Test_SchemeInterpreter()

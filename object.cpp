@@ -339,6 +339,14 @@ Object *is_pair_proc(Object *arguments)
 }
 
 
+Object *apply_proc(Object *arguments) 
+{
+	std::cerr << "illegal state: The body of the apply primitive procedure should not execute." << std::endl;
+	exit(1);
+}
+
+
+
 bool is_compound_proc(Object *obj);
 
 Object *is_procedure_proc(Object *arguments) 
@@ -619,6 +627,7 @@ void init(void)
 
     add_procedure("eq?", is_eq_proc);
 
+    add_procedure("apply", apply_proc);
 }
 /***************************** READ ******************************/
 
@@ -1166,6 +1175,26 @@ char is_begin(Object *exp)
 }
 
 
+Object *apply_operator(Object *arguments) {
+    return car(arguments);
+}
+
+Object *prepare_apply_operands(Object *arguments) {
+    if (is_the_empty_list(cdr(arguments))) {
+        return car(arguments);
+    }
+    else {
+        return new Object(car(arguments),
+                    prepare_apply_operands(cdr(arguments)));
+    }
+}
+
+
+Object *apply_operands(Object *arguments) {
+    return prepare_apply_operands(cdr(arguments));
+}
+
+
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp, Object *env)
 {
@@ -1240,18 +1269,24 @@ tailcall:
 
 		procedure = eval(op(exp), env);
 		arguments = list_of_values(operands(exp), env);
+
+		/* handle apply specially for tailcall requirement */
+		if (is_primitive_proc(procedure) && 
+			procedure->fun_ == apply_proc) {
+			procedure = apply_operator(arguments);
+			arguments = apply_operands(arguments);
+		}
+
 		if (is_primitive_proc(procedure)) {
 		    return procedure->fun_(arguments);
-		}
-		else if (is_compound_proc(procedure)) {
+		} else if (is_compound_proc(procedure)) {
 		    env = extend_environment( 
 			       procedure->compound_proc.parameters,
 			       arguments,
 			       procedure->compound_proc.env);
 		    exp = new Object(begin_symbol, procedure->compound_proc.body);
 		    goto tailcall;
-		}
-		else {
+		} else {
 		    fprintf(stderr, "unknown procedure type\n");
 		    exit(1);
 		}
