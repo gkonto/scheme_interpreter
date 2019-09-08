@@ -22,6 +22,7 @@ Object *lambda_symbol          = 0;
 Object *begin_symbol           = 0;
 Object *cond_symbol            = 0;
 Object *else_symbol            = 0;
+Object *let_symbol             = 0;
 
 
 // TODO code full of memory leaks
@@ -204,8 +205,6 @@ static Object *setup_environment(void)
                       the_empty_environment);
     return initial_env;
 }
-
-
 
 
 Object *read_pair(std::istream &in)
@@ -571,6 +570,7 @@ void init(void)
 	begin_symbol  = make_symbol("begin");
 	cond_symbol   = make_symbol("cond");
 	else_symbol   = make_symbol("else");
+	let_symbol    = make_symbol("let");
 
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
@@ -1035,6 +1035,68 @@ static Object *rest_operands(Object *ops)
 	return cdr(ops);
 }
 
+char is_let(Object *exp) 
+{
+    return is_tagged_list(exp, let_symbol);
+}
+
+Object *let_bindings(Object *exp) 
+{
+    return cadr(exp);
+}
+
+Object *let_body(Object *exp) 
+{
+    return cddr(exp);
+}
+
+Object *binding_parameter(Object *binding) 
+{
+    return car(binding);
+}
+
+Object *binding_argument(Object *binding) 
+{
+    return cadr(binding);
+}
+
+Object *bindings_parameters(Object *bindings) 
+{
+    return is_the_empty_list(bindings) ?
+               the_empty_list :
+               new Object(binding_parameter(car(bindings)),
+                    bindings_parameters(cdr(bindings)));
+}
+
+Object *bindings_arguments(Object *bindings) 
+{
+    return is_the_empty_list(bindings) ?
+               the_empty_list :
+               new Object(binding_argument(car(bindings)),
+                    bindings_arguments(cdr(bindings)));
+}
+
+Object *let_parameters(Object *exp) 
+{
+    return bindings_parameters(let_bindings(exp));
+}
+
+Object *let_arguments(Object *exp) 
+{
+    return bindings_arguments(let_bindings(exp));
+}
+
+Object *let_to_application(Object *exp) 
+{
+    return new Object(make_lambda(let_parameters(exp), let_body(exp)), let_arguments(exp));
+}
+
+
+
+
+
+
+
 
 Object *eval(Object *exp, Object *env);
 
@@ -1124,6 +1186,9 @@ tailcall:
 		exp = cond_to_if(exp);
 		goto tailcall;
 
+	} else if (is_let(exp)) {
+		exp = let_to_application(exp);
+		goto tailcall;
 	} else if (is_application(exp)) {
 
 		procedure = eval(op(exp), env);

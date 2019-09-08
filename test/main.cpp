@@ -105,6 +105,7 @@ class Test_SchemeInterpreter
 			_test("(begin 1 2 3)", "3");
 
 			_test("(cond (#f   1) ((eq? 'a 'a) 2) (else         3))", "2");
+			_test("(let ((x (+ 1 1)) (y (- 5 2))) (+ x y))", "5");
 		}
 
 		~Test_SchemeInterpreter()

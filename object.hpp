@@ -111,6 +111,7 @@ struct Object
 };
 
 // OBJECT DECLARATIONS 
+//extern make global static
 extern Object *false_obj;
 extern Object *true_obj; 
 extern Object *the_empty_list;
@@ -122,6 +123,7 @@ extern Object *the_empty_environment;
 extern Object *the_global_environment;
 extern Object *if_symbol;
 extern Object *lambda_symbol;
+extern Object *let_symbol;
 
 
 
