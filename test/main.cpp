@@ -121,6 +121,10 @@ class Test_SchemeInterpreter
 			_test("(apply + '(1 2 3))", "6");
 			_test("(apply + 1 2 '(3))", "6");
 			_test("(apply + 1 2 3 '())", "6");
+
+			_test("(define env (environment))", "ok");
+			_test("(eval '(define z 25) env)", "ok");
+			_test("(eval 'z env)", "25");
 		}
 
 		~Test_SchemeInterpreter()

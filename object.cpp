@@ -26,6 +26,8 @@ Object *let_symbol             = 0;
 Object *and_symbol             = 0;
 Object *or_symbol              = 0;
 
+Object *make_environment(void);
+void populate_environment(Object *env);
 
 // TODO code full of memory leaks
 //
@@ -199,6 +201,7 @@ static void define_variable(Object *var, Object *val, Object *env)
     add_binding_to_frame(var, val, frame);
 }
 
+
 static Object *setup_environment(void)
 {
     Object *initial_env = extend_environment(
@@ -357,6 +360,39 @@ Object *is_procedure_proc(Object *arguments)
                 true_obj :
                 false_obj;
 }
+
+
+Object *interaction_environment_proc(Object *arguments) {
+    return the_global_environment;
+}
+
+Object *setup_environment(void);
+
+Object *null_environment_proc(Object *arguments) {
+    return setup_environment();
+}
+
+
+Object *environment_proc(Object *arguments) 
+{
+    return make_environment();
+}
+
+Object *eval_proc(Object *arguments) 
+{
+	std::cerr << "illegal state: The body of the eval primitive procedure should not execute." << std::endl;
+	exit(1);
+}
+
+Object *make_environment(void)
+{
+    Object *env = setup_environment();
+    populate_environment(env);
+    return env;
+}
+
+
+
 
 
 Object *char_to_integer_proc(Object *arguments) 
@@ -563,44 +599,23 @@ bool is_compound_proc(Object *obj) {
 
 
 /*****************************************************************/
-void init(void)
-{
-	false_obj = new Object(false, TT_BOOLEAN);
-	true_obj  = new Object(true, TT_BOOLEAN);
-	the_empty_list = new Object(TT_THE_EMPTY_LIST);
-	symbol_table = the_empty_list;
-	quote_symbol = make_symbol("quote");
-	define_symbol = make_symbol("define");
-	set_symbol   = make_symbol("set!");
-	ok_symbol    = make_symbol("ok");
-	the_empty_environment = the_empty_list;
-	the_global_environment = setup_environment();
-	if_symbol = make_symbol("if");
-	lambda_symbol = make_symbol("lambda");
-	begin_symbol  = make_symbol("begin");
-	cond_symbol   = make_symbol("cond");
-	else_symbol   = make_symbol("else");
-	let_symbol    = make_symbol("let");
-	and_symbol    = make_symbol("and");
-	or_symbol     = make_symbol("or");
 
-	define_variable(make_symbol("+"),
-			new Object(add_proc),
-			the_global_environment);
+void populate_environment(Object *env) 
+{
 
 #define add_procedure(scheme_name, c_name)              \
     define_variable(make_symbol(scheme_name),           \
                     make_primitive_proc(c_name),        \
-                    the_global_environment);
+                    env);
 
-    add_procedure("null?"     , is_null_proc);
-    add_procedure("boolean?"  , is_boolean_proc);
-    add_procedure("symbol?"   , is_symbol_proc);
-    add_procedure("integer?"  , is_integer_proc);
-    add_procedure("char?"     , is_char_proc);
-    add_procedure("string?"   , is_string_proc);
-    add_procedure("pair?"     , is_pair_proc);
-    add_procedure("procedure?", is_procedure_proc);
+    add_procedure("null?"      , is_null_proc);
+    add_procedure("boolean?"   , is_boolean_proc);
+    add_procedure("symbol?"    , is_symbol_proc);
+    add_procedure("integer?"   , is_integer_proc);
+    add_procedure("char?"      , is_char_proc);
+    add_procedure("string?"    , is_string_proc);
+    add_procedure("pair?"      , is_pair_proc);
+    add_procedure("procedure?" , is_procedure_proc);
     
     add_procedure("char->integer" , char_to_integer_proc);
     add_procedure("integer->char" , integer_to_char_proc);
@@ -628,6 +643,38 @@ void init(void)
     add_procedure("eq?", is_eq_proc);
 
     add_procedure("apply", apply_proc);
+    
+    add_procedure("interaction-environment", 
+                                     interaction_environment_proc);
+    add_procedure("null-environment", null_environment_proc);
+    add_procedure("environment"     , environment_proc);
+    add_procedure("eval"            , eval_proc);
+}
+
+
+void init(void)
+{
+	false_obj = new Object(false, TT_BOOLEAN);
+	true_obj  = new Object(true, TT_BOOLEAN);
+	the_empty_list = new Object(TT_THE_EMPTY_LIST);
+	symbol_table = the_empty_list;
+	quote_symbol = make_symbol("quote");
+	define_symbol = make_symbol("define");
+	set_symbol   = make_symbol("set!");
+	ok_symbol    = make_symbol("ok");
+	the_empty_environment = the_empty_list;
+	the_global_environment = setup_environment();
+	if_symbol = make_symbol("if");
+	lambda_symbol = make_symbol("lambda");
+	begin_symbol  = make_symbol("begin");
+	cond_symbol   = make_symbol("cond");
+	else_symbol   = make_symbol("else");
+	let_symbol    = make_symbol("let");
+	and_symbol    = make_symbol("and");
+	or_symbol     = make_symbol("or");
+
+	the_empty_environment = the_empty_list;
+	the_global_environment = make_environment();
 }
 /***************************** READ ******************************/
 
@@ -1195,6 +1242,14 @@ Object *apply_operands(Object *arguments) {
 }
 
 
+Object *eval_expression(Object *arguments) {
+    return car(arguments);
+}
+
+Object *eval_environment(Object *arguments) {
+    return cadr(arguments);
+}
+
 /* until we have lists and symbols just echo */
 Object *eval(Object *exp, Object *env)
 {
@@ -1271,11 +1326,18 @@ tailcall:
 		arguments = list_of_values(operands(exp), env);
 
 		/* handle apply specially for tailcall requirement */
-		if (is_primitive_proc(procedure) && 
-			procedure->fun_ == apply_proc) {
+		if (is_primitive_proc(procedure) && procedure->fun_ == eval_proc) {
+			exp = eval_expression(arguments);
+			env = eval_environment(arguments);
+			goto tailcall;
+		}
+
+		/* handle apply specially for tail call requirement */
+		if (is_primitive_proc(procedure) && procedure->fun_ == apply_proc) {
 			procedure = apply_operator(arguments);
 			arguments = apply_operands(arguments);
 		}
+
 
 		if (is_primitive_proc(procedure)) {
 		    return procedure->fun_(arguments);
