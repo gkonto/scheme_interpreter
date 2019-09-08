@@ -106,6 +106,17 @@ class Test_SchemeInterpreter
 
 			_test("(cond (#f   1) ((eq? 'a 'a) 2) (else         3))", "2");
 			_test("(let ((x (+ 1 1)) (y (- 5 2))) (+ x y))", "5");
+
+
+			_test("(and 1 2 3)", "3");
+			_test("(and)", "#t");
+			_test("(or #f 2 #t)", "2");
+			_test("(or)", "#f");
+			_test("(define a 1)", "ok");
+			_test("(and #f (set! a 2))", "#f");
+			_test("a", "1");
+			_test("(and #t (set! a 2))", "ok");
+			_test("a", "2");
 		}
 
 		~Test_SchemeInterpreter()

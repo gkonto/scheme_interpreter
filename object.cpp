@@ -23,6 +23,8 @@ Object *begin_symbol           = 0;
 Object *cond_symbol            = 0;
 Object *else_symbol            = 0;
 Object *let_symbol             = 0;
+Object *and_symbol             = 0;
+Object *or_symbol              = 0;
 
 
 // TODO code full of memory leaks
@@ -571,6 +573,8 @@ void init(void)
 	cond_symbol   = make_symbol("cond");
 	else_symbol   = make_symbol("else");
 	let_symbol    = make_symbol("let");
+	and_symbol    = make_symbol("and");
+	or_symbol     = make_symbol("or");
 
 	define_variable(make_symbol("+"),
 			new Object(add_proc),
@@ -1035,20 +1039,18 @@ static Object *rest_operands(Object *ops)
 	return cdr(ops);
 }
 
-char is_let(Object *exp) 
-{
+char is_let(Object *exp) {
     return is_tagged_list(exp, let_symbol);
 }
 
-Object *let_bindings(Object *exp) 
-{
+Object *let_bindings(Object *exp) {
     return cadr(exp);
 }
 
-Object *let_body(Object *exp) 
-{
+Object *let_body(Object *exp) {
     return cddr(exp);
 }
+
 
 Object *binding_parameter(Object *binding) 
 {
@@ -1089,6 +1091,22 @@ Object *let_arguments(Object *exp)
 Object *let_to_application(Object *exp) 
 {
     return new Object(make_lambda(let_parameters(exp), let_body(exp)), let_arguments(exp));
+}
+
+char is_and(Object *exp) {
+    return is_tagged_list(exp, and_symbol);
+}
+
+Object *and_tests(Object *exp) {
+    return cdr(exp);
+}
+
+char is_or(Object *exp) {
+    return is_tagged_list(exp, or_symbol);
+}
+
+Object *or_tests(Object *exp) {
+    return cdr(exp);
 }
 
 
@@ -1188,6 +1206,35 @@ tailcall:
 
 	} else if (is_let(exp)) {
 		exp = let_to_application(exp);
+		goto tailcall;
+	} else if (is_and(exp)) {
+		exp = and_tests(exp);
+		if (is_the_empty_list(exp)) {
+		    return true_obj;
+		}
+		while (!is_last_exp(exp)) {
+		    Object *result = eval(first_exp(exp), env);
+		    if (is_false(result)) {
+			return result;
+		    }
+		    exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
+		goto tailcall;
+		}
+		else if (is_or(exp)) {
+		exp = or_tests(exp);
+		if (is_the_empty_list(exp)) {
+		    return false_obj;
+		}
+		while (!is_last_exp(exp)) {
+		    Object *result = eval(first_exp(exp), env);
+		    if (is_true(result)) {
+			return result;
+		    }
+		    exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
 		goto tailcall;
 	} else if (is_application(exp)) {
 

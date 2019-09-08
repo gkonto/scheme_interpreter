@@ -124,6 +124,8 @@ extern Object *the_global_environment;
 extern Object *if_symbol;
 extern Object *lambda_symbol;
 extern Object *let_symbol;
+extern Object *and_symbol;
+extern Object *or_symbol;
 
 
 
