@@ -18,6 +18,9 @@ enum ObjectType
 	TT_PAIR,
 	TT_PRIMITIVE_PROC,
 	TT_COMPOUND_PROC,
+	TT_INPUT_PORT,
+	TT_OUTPUT_PORT,
+	TT_EOF_OBJECT,
 
 	TT_MAX
 };
@@ -96,6 +99,15 @@ struct Object
 		pair.cdr = cdr;
 	}
 
+	explicit Object() :
+		long_value_(0),
+		bool_value_(0),
+		char_value_(' '),
+		in_(0)
+	{
+
+	}
+
 
 
 	//TODO make private
@@ -106,6 +118,8 @@ struct Object
 		Pair pair;
 		PrimitiveProcFun fun_;
 		CompoundProc compound_proc;
+		FILE *in_;
+		FILE *out_;
 
 	ObjectType type_;
 };
@@ -126,6 +140,7 @@ extern Object *lambda_symbol;
 extern Object *let_symbol;
 extern Object *and_symbol;
 extern Object *or_symbol;
+extern Object *eof_object;
 
 
 
@@ -160,7 +175,7 @@ void eat_whitespace(std::istream &in);
 
 Object *eval(Object *exp, Object *env);
 
-std::string write(Object *obj);
+std::string write(std::ostream &out, Object *obj);
 //TODO make static
 std::string write_pair(Object *obj);
 

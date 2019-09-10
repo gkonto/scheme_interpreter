@@ -32,7 +32,6 @@ class Test_SchemeInterpreter
 			_test("\"asdf\\\"asdf\"", "\"asdf\\\"asdf\"");
 			_test("\"asdf\\n\"", "\"asdf\\n\"");
 			_test("\"asdf\n\"", "\"asdf\\n\"");
-
 			
 			// * Invalid tests after 'quote' support
 			//empty list
@@ -86,9 +85,7 @@ class Test_SchemeInterpreter
 			_test("(boolean? #t)", "#t");
 			_test("(integer->char 99)", "#\\c");
 			_test("(< 1 2 3)", "#t");
-			_test("(cons 'a 'b)", "(a . b)");
-
-
+			_test("(cons 'a 'b)", "(a . b)"); 
 			//Lambda
 			_test("(define (map proc items) (if (null? items) '() (cons (proc (car items)) (map proc (cdr items)))))", "ok");
 			_test("(define (double x) (* 2 x))", "ok");
@@ -125,7 +122,14 @@ class Test_SchemeInterpreter
 			_test("(define env (environment))", "ok");
 			_test("(eval '(define z 25) env)", "ok");
 			_test("(eval 'z env)", "25");
+
+			_test("(define out (open-output-port \"asdf.txt\"))", "ok");
+			_test("(write-char #\\c out)", "ok");
+			_test("(close-output-port out)", "ok");
+			_test("(load \"program.scm\")", "program-loaded"); // FIXME issue in this test: "program.scm" file is read, not program.scm as should.
+			//FIXME is program.scm is empty file, there is an error..
 		}
+
 
 		~Test_SchemeInterpreter()
 		{
@@ -139,7 +143,10 @@ class Test_SchemeInterpreter
 		{
 			std::istringstream it(input);
 			std::cout << "[+] Test: " << input << std::endl;
-			std::string got = write(eval(read(it), the_global_environment));
+			Object *exp = read(it);
+
+			std::string got = write(std::cout, eval(exp, the_global_environment));
+
 			if (expecting.compare(got)) {
 				std::cout << "Error in test!" << std::endl;
 				std::cout << "Input    : " << input << std::endl;

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <fstream>
 #include "object.hpp"
 
 /**************************** MODEL ******************************/
@@ -25,9 +26,14 @@ Object *else_symbol            = 0;
 Object *let_symbol             = 0;
 Object *and_symbol             = 0;
 Object *or_symbol              = 0;
+Object *eof_object             = 0;
 
 Object *make_environment(void);
+Object *make_input_port(FILE *in);
+static Object *setup_environment(void);
 void populate_environment(Object *env);
+bool is_compound_proc(Object *obj);
+bool is_input_port(Object *obj);
 
 // TODO code full of memory leaks
 //
@@ -245,6 +251,7 @@ Object *read_pair(std::istream &in)
 		in.unget();
 
 		Object *cdr = read_pair(in);
+
 		return new Object(car, cdr);
 	}
 }
@@ -350,7 +357,6 @@ Object *apply_proc(Object *arguments)
 
 
 
-bool is_compound_proc(Object *obj);
 
 Object *is_procedure_proc(Object *arguments) 
 {
@@ -366,7 +372,6 @@ Object *interaction_environment_proc(Object *arguments) {
     return the_global_environment;
 }
 
-Object *setup_environment(void);
 
 Object *null_environment_proc(Object *arguments) {
     return setup_environment();
@@ -389,6 +394,86 @@ Object *make_environment(void)
     Object *env = setup_environment();
     populate_environment(env);
     return env;
+}
+
+Object *load_proc(Object *arguments) {
+    std::string filename(car(arguments)->str_value_);
+    //in = fopen(filename, "r");
+    std::ifstream ifs(filename, std::istream::in);
+    if (ifs.fail()) {
+	    std::cerr << "could not load file \"" << filename << "\"" << std::endl;
+        exit(1);
+    }
+
+    Object *exp;
+    Object *result;
+    while ((exp = read(ifs)) != NULL) {
+        result = eval(exp, the_global_environment);
+    }
+
+    ifs.close();
+    return result;
+}
+
+
+Object *make_input_port(FILE *stream) {
+    Object *obj;
+    
+    obj = new Object();
+    obj->type_ = TT_INPUT_PORT;
+    obj->in_ = stream;
+    return obj;
+}
+
+
+
+Object *open_input_port_proc(Object *arguments) 
+{
+    std::string filename(car(arguments)->str_value_);
+
+    FILE *in = fopen(filename.c_str(), "r");
+    if (in == NULL) {
+	    std::cerr << "could not open file \" " << filename << "\"" << std::endl;
+        exit(1);
+    }
+    return make_input_port(in);
+}
+
+Object *close_input_port_proc(Object *arguments) {
+    
+    int result = fclose(car(arguments)->in_);
+    if (result == EOF) {
+	    std::cerr << "could not close input port" << std::endl;
+        exit(1);
+    }
+    return ok_symbol;
+}
+
+bool is_input_port(Object *obj)
+{
+	return obj->type_ == TT_INPUT_PORT;
+}
+
+Object *is_input_port_proc(Object *arguments) {
+    return is_input_port(car(arguments)) ? true_obj : false_obj;
+}
+
+
+Object *make_output_port(FILE *stream) 
+{
+    Object *obj = new Object();
+    obj->type_ = TT_OUTPUT_PORT;
+    obj->out_ = stream;
+    return obj;
+}
+
+
+bool is_output_port(Object *obj) {
+    return obj->type_ == TT_OUTPUT_PORT;
+}
+
+bool is_eof_object(Object *obj) {
+    return obj == eof_object;
 }
 
 
@@ -595,6 +680,120 @@ bool is_compound_proc(Object *obj) {
     return obj->type_ == TT_COMPOUND_PROC;
 }
 
+Object *read_proc(Object *arguments) {
+    FILE *in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->in_;
+
+    //TODO not sure if correct
+    std::fstream ini;
+	ini << in;
+    Object *result = read(ini);
+
+    return (result == NULL) ? eof_object : result;
+}
+
+
+Object *read_char_proc(Object *arguments) {
+    FILE *in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->out_;
+
+    std::fstream ini;
+    ini << in;
+    char result = ini.get();
+
+    return (result == EOF) ? eof_object : new Object(result, TT_CHARACTER);
+}
+
+Object *peek_char_proc(Object *arguments) {
+    
+    FILE *in = is_the_empty_list(arguments) ?
+             stdin :
+             car(arguments)->in_;
+    std::fstream ini;
+    ini << in;
+    char result = ini.peek();
+   
+
+    return (result == EOF) ? eof_object : new Object(result, TT_CHARACTER);
+}
+
+
+Object *is_eof_object_proc(Object *arguments) {
+    return is_eof_object(car(arguments)) ? true_obj : false_obj;
+}
+
+
+Object *open_output_port_proc(Object *arguments) {
+
+    std::string filename = car(arguments)->str_value_;
+    FILE *out = fopen(filename.c_str(), "w");
+    if (out == NULL) {
+	    std::cerr << "could not open file \""<< filename << "\"";
+        exit(1);
+    }
+    return make_output_port(out);
+}
+
+
+Object *close_output_port_proc(Object *arguments) {
+    int result = fclose(car(arguments)->out_);
+    if (result == EOF) {
+	    std::cerr << "could not close output port" << std::endl;
+        exit(1);
+    }
+    return ok_symbol;
+}
+
+
+
+
+Object *is_output_port_proc(Object *arguments) {
+    return is_output_port(car(arguments)) ? true_obj : false_obj;
+}
+
+
+
+Object *write_char_proc(Object *arguments) {
+    Object *character = car(arguments);
+    arguments = cdr(arguments);
+    FILE *out = is_the_empty_list(arguments) ?
+             stdout :
+             car(arguments)->out_;
+    putc(character->char_value_, out);    
+    fflush(out);
+    return ok_symbol;
+}
+
+Object *write_proc(Object *arguments) {
+    
+    Object *exp = car(arguments);
+    arguments = cdr(arguments);
+    FILE *out = is_the_empty_list(arguments) ?
+             stdout :
+             car(arguments)->out_;
+    std::fstream ini;
+    ini << out;
+    write(ini, exp);
+    ini.flush();
+    return ok_symbol;
+}
+
+Object *error_proc(Object *arguments) {
+
+    while (!is_the_empty_list(arguments)) {
+        write(std::cerr, car(arguments));
+	std::cerr << " ";
+        arguments = cdr(arguments);
+    };
+    std::cout << std::endl << "exiting" << std::endl;
+    exit(1);
+}
+
+
+
+
 
 
 
@@ -649,6 +848,23 @@ void populate_environment(Object *env)
     add_procedure("null-environment", null_environment_proc);
     add_procedure("environment"     , environment_proc);
     add_procedure("eval"            , eval_proc);
+
+
+    add_procedure("load", load_proc);
+    add_procedure("open-input-port"  , open_input_port_proc);
+    add_procedure("close-input-port" , close_input_port_proc);
+    add_procedure("input-port?"      , is_input_port_proc);
+    add_procedure("read"             , read_proc);
+    add_procedure("read-char"        , read_char_proc);
+    add_procedure("peek-char"        , peek_char_proc);
+    add_procedure("eof-object?"      , is_eof_object_proc);
+    add_procedure("open-output-port" , open_output_port_proc);
+    add_procedure("close-output-port", close_output_port_proc);
+    add_procedure("output-port?"     , is_output_port_proc);
+    add_procedure("write-char"       , write_char_proc);
+    add_procedure("write"            , write_proc);
+
+    add_procedure("error", error_proc);
 }
 
 
@@ -1362,45 +1578,49 @@ tailcall:
 }
 
 /**************************** PRINT ******************************/
-std::string write_pair(Object *pair)
+std::string write_pair(std::ostream &out, Object *pair)
 {
 	Object *car_obj = car(pair);
 	Object *cdr_obj = cdr(pair);
 
 	std::string ret;
 
-	ret += write(car_obj);
+	ret += write(out, car_obj);
 	if (cdr_obj->type_ == TT_PAIR) {
 		ret += " ";
-		ret += write_pair(cdr_obj);
+		ret += write_pair(out, cdr_obj);
 	} else if (cdr_obj->type_ == TT_THE_EMPTY_LIST) {
 		return ret;
 	} else {
 		ret += " . ";
-		ret += write(cdr_obj);
+		ret += write(out, cdr_obj);
 	}
 	return ret;
 }
 
-std::string write(Object *obj)
+std::string write(std::ostream &out, Object *obj)
 {
 	std::stringstream ss;
 
 	switch (obj->type_)
 	{
 		case TT_THE_EMPTY_LIST: {
+			out << "()";
 			return "()";
 		}
 		case TT_FIXNUM: {
 			ss << obj->long_value_;
+			out << ss.str();
 			return ss.str();
 		}
 		case TT_SYMBOL: {
+					out << obj->str_value_;
 			return obj->str_value_;
 		}
 		case TT_BOOLEAN: {
 			std::string val = is_false(obj) ? "#f" : "#t";
 			ss << val;
+			out << val;
 			return ss.str();
 		}
 		case TT_CHARACTER: {
@@ -1409,28 +1629,34 @@ std::string write(Object *obj)
 			switch (c) {
 				case '\n':
 					ret.append("newline");
+					out << ret;
 					return ret;
 				case ' ':
 					ret.append("space");
+					out << ret;
 					return ret;
 				default:
 					ret += c;
+					out << ret;
 					return ret;
 
 			}
 		}
 		case TT_STRING: {
 					std::string str = obj->str_value_;
+					out << str;
 					return str;
 				}
 		case TT_PAIR: {
 			      std::string ret = "(";
-			      ret += write_pair(obj);
+			      ret += write_pair(out, obj);
 			      ret += ")";
+			      out << ret;
 			      return ret;
 		      }
 		case TT_PRIMITIVE_PROC:
 		case TT_COMPOUND_PROC:
+		      out << "#<procedure>";
 		      return "#<procedure>";
 		default: {
 			std::cerr << "cannot write unknown type" << std::endl;
