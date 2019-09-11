@@ -24,7 +24,7 @@ int main(void)
 		{
 			break;
 		}
-		write(std::cout, eval(exp, the_global_environment));
+		write(std::cout, eval(exp, global::the_global_environment));
 		std::cout << std::endl;
 	
 	} /* while  */

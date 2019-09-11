@@ -127,6 +127,7 @@ struct Object
 
 // OBJECT DECLARATIONS 
 //extern make global static
+namespace global {
 extern Object *false_obj;
 extern Object *true_obj; 
 extern Object *the_empty_list;
@@ -142,6 +143,7 @@ extern Object *let_symbol;
 extern Object *and_symbol;
 extern Object *or_symbol;
 extern Object *eof_object;
+};
 
 
 

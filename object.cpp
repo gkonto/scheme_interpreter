@@ -8,25 +8,28 @@
 #include "object.hpp"
 
 /**************************** MODEL ******************************/
-Object *false_obj              = 0;
-Object *true_obj               = 0;
-Object *symbol_table           = 0;
-Object *the_empty_list         = 0;
-Object *quote_symbol           = 0;
-Object *define_symbol          = 0;
-Object *set_symbol             = 0;
-Object *ok_symbol              = 0;
-Object *the_empty_environment  = 0;
-Object *the_global_environment = 0;
-Object *if_symbol              = 0;
-Object *lambda_symbol          = 0;
-Object *begin_symbol           = 0;
-Object *cond_symbol            = 0;
-Object *else_symbol            = 0;
-Object *let_symbol             = 0;
-Object *and_symbol             = 0;
-Object *or_symbol              = 0;
-Object *eof_object             = 0;
+
+namespace global {
+	Object *false_obj              = 0;
+	Object *true_obj               = 0;
+	Object *symbol_table           = 0;
+	Object *the_empty_list         = 0;
+	Object *quote_symbol           = 0;
+	Object *define_symbol          = 0;
+	Object *set_symbol             = 0;
+	Object *ok_symbol              = 0;
+	Object *the_empty_environment  = 0;
+	Object *the_global_environment = 0;
+	Object *if_symbol              = 0;
+	Object *lambda_symbol          = 0;
+	Object *begin_symbol           = 0;
+	Object *cond_symbol            = 0;
+	Object *else_symbol            = 0;
+	Object *let_symbol             = 0;
+	Object *and_symbol             = 0;
+	Object *or_symbol              = 0;
+	Object *eof_object             = 0;
+};
 
 Object *make_environment(void);
 Object *make_input_port(FILE *in);
@@ -39,7 +42,7 @@ bool is_input_port(Object *obj);
 //
 Object *make_symbol(const std::string &value)
 {
-	Object *element = symbol_table;
+	Object *element = global::symbol_table;
 
 	while (!is_the_empty_list(element)) {
 		Object *car_obj = car(element);
@@ -51,7 +54,7 @@ Object *make_symbol(const std::string &value)
 	Object *obj = new Object(value, TT_SYMBOL);
 
 	//TODO make public member that adds to symbol table
-	symbol_table = new Object(obj, symbol_table);
+	global::symbol_table = new Object(obj, global::symbol_table);
 
 	return obj;
 }
@@ -211,9 +214,9 @@ static void define_variable(Object *var, Object *val, Object *env)
 static Object *setup_environment(void)
 {
     Object *initial_env = extend_environment(
-                      the_empty_list,
-                      the_empty_list,
-                      the_empty_environment);
+                      global::the_empty_list,
+                      global::the_empty_list,
+                      global::the_empty_environment);
     return initial_env;
 }
 
@@ -224,7 +227,7 @@ Object *read_pair(std::istream &in)
 
 	int c = in.get();
 	if (c == ')') {
-		return the_empty_list;
+		return global::the_empty_list;
 	}
 	in.unget();
 
@@ -269,13 +272,13 @@ bool is_boolean(Object *obj)
 
 bool is_the_empty_list(Object *obj)
 {
-	return obj == the_empty_list;
+	return obj == global::the_empty_list;
 }
 
 /*****************************************************************/
 bool  is_false(Object *obj)
 {
-	return obj == false_obj;
+	return obj == global::false_obj;
 }
 
 /*****************************************************************/
@@ -315,37 +318,37 @@ bool is_primitive_proc(Object *obj)
 
 Object *is_null_proc(Object *arguments)
 {
-    return is_the_empty_list(car(arguments)) ? true_obj : false_obj;
+    return is_the_empty_list(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_boolean_proc(Object *arguments)
 {
-    return is_boolean(car(arguments)) ? true_obj : false_obj;
+    return is_boolean(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_symbol_proc(Object *arguments)
 {
-    return is_symbol(car(arguments)) ? true_obj : false_obj;
+    return is_symbol(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_integer_proc(Object *arguments)
 {
-    return is_fixnum(car(arguments)) ? true_obj : false_obj;
+    return is_fixnum(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_char_proc(Object *arguments) 
 {
-    return is_character(car(arguments)) ? true_obj : false_obj;
+    return is_character(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_string_proc(Object *arguments) 
 {
-    return is_string(car(arguments)) ? true_obj : false_obj;
+    return is_string(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 Object *is_pair_proc(Object *arguments) 
 {
-    return is_pair(car(arguments)) ? true_obj : false_obj;
+    return is_pair(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 
@@ -363,13 +366,13 @@ Object *is_procedure_proc(Object *arguments)
     Object *obj = car(arguments);
     return (is_primitive_proc(obj) ||
             is_compound_proc(obj)) ?
-                true_obj :
-                false_obj;
+                global::true_obj :
+		global::false_obj;
 }
 
 
 Object *interaction_environment_proc(Object *arguments) {
-    return the_global_environment;
+    return global::the_global_environment;
 }
 
 
@@ -408,7 +411,7 @@ Object *load_proc(Object *arguments) {
     Object *exp;
     Object *result;
     while ((exp = read(ifs)) != NULL) {
-        result = eval(exp, the_global_environment);
+        result = eval(exp, global::the_global_environment);
     }
 
     ifs.close();
@@ -446,7 +449,7 @@ Object *close_input_port_proc(Object *arguments) {
 	    std::cerr << "could not close input port" << std::endl;
         exit(1);
     }
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 bool is_input_port(Object *obj)
@@ -455,7 +458,7 @@ bool is_input_port(Object *obj)
 }
 
 Object *is_input_port_proc(Object *arguments) {
-    return is_input_port(car(arguments)) ? true_obj : false_obj;
+    return is_input_port(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 
@@ -473,7 +476,7 @@ bool is_output_port(Object *obj) {
 }
 
 bool is_eof_object(Object *obj) {
-    return obj == eof_object;
+    return obj == global::eof_object;
 }
 
 
@@ -569,10 +572,10 @@ Object *is_number_equal_proc(Object *arguments)
     value = (car(arguments))->long_value_;
     while (!is_the_empty_list(arguments = cdr(arguments))) {
         if (value != ((car(arguments))->long_value_)) {
-            return false_obj;
+            return global::false_obj;
         }
     }
-    return true_obj;
+    return global::true_obj;
 }
 
 Object *is_less_than_proc(Object *arguments) 
@@ -587,10 +590,10 @@ Object *is_less_than_proc(Object *arguments)
             previous = next;
         }
         else {
-            return false_obj;
+            return global::false_obj;
         }
     }
-    return true_obj;
+    return global::true_obj;
 }
 
 Object *is_greater_than_proc(Object *arguments) 
@@ -605,10 +608,10 @@ Object *is_greater_than_proc(Object *arguments)
             previous = next;
         }
         else {
-            return false_obj;
+            return global::false_obj;
         }
     }
-    return true_obj;
+    return global::true_obj;
 }
 
 
@@ -626,12 +629,12 @@ Object *cdr_proc(Object *arguments) {
 
 Object *set_car_proc(Object *arguments) {
     set_car(car(arguments), cadr(arguments));
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 Object *set_cdr_proc(Object *arguments) {
     set_cdr(car(arguments), cadr(arguments));
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 Object *list_proc(Object *arguments) {
@@ -646,26 +649,26 @@ Object *is_eq_proc(Object *arguments) {
     obj2 = cadr(arguments);
     
     if (obj1->type_ != obj2->type_) {
-        return false_obj;
+        return global::false_obj;
     }
     switch (obj1->type_) {
         case TT_FIXNUM:
             return (obj1->long_value_ == 
                     obj2->long_value_) ?
-                        true_obj : false_obj;
+                        global::true_obj : global::false_obj;
             break;
         case TT_CHARACTER:
             return (obj1->long_value_ == 
                     obj2->long_value_) ?
-                        true_obj : false_obj;
+                        global::true_obj : global::false_obj;
             break;
         case TT_STRING:
             return (obj1->str_value_.compare(
                            obj2->str_value_) == 0) ?
-                        true_obj : false_obj;
+                        global::true_obj : global::false_obj;
             break;
         default:
-            return (obj1 == obj2) ? true_obj : false_obj;
+            return (obj1 == obj2) ? global::true_obj : global::false_obj;
     }
 }
 
@@ -690,7 +693,7 @@ Object *read_proc(Object *arguments) {
 	ini << in;
     Object *result = read(ini);
 
-    return (result == NULL) ? eof_object : result;
+    return (result == NULL) ? global::eof_object : result;
 }
 
 
@@ -703,7 +706,7 @@ Object *read_char_proc(Object *arguments) {
     ini << in;
     char result = ini.get();
 
-    return (result == EOF) ? eof_object : new Object(result, TT_CHARACTER);
+    return (result == EOF) ? global::eof_object : new Object(result, TT_CHARACTER);
 }
 
 Object *peek_char_proc(Object *arguments) {
@@ -716,12 +719,12 @@ Object *peek_char_proc(Object *arguments) {
     char result = ini.peek();
    
 
-    return (result == EOF) ? eof_object : new Object(result, TT_CHARACTER);
+    return (result == EOF) ? global::eof_object : new Object(result, TT_CHARACTER);
 }
 
 
 Object *is_eof_object_proc(Object *arguments) {
-    return is_eof_object(car(arguments)) ? true_obj : false_obj;
+    return is_eof_object(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 
@@ -743,14 +746,14 @@ Object *close_output_port_proc(Object *arguments) {
 	    std::cerr << "could not close output port" << std::endl;
         exit(1);
     }
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 
 
 
 Object *is_output_port_proc(Object *arguments) {
-    return is_output_port(car(arguments)) ? true_obj : false_obj;
+    return is_output_port(car(arguments)) ? global::true_obj : global::false_obj;
 }
 
 
@@ -763,7 +766,7 @@ Object *write_char_proc(Object *arguments) {
              car(arguments)->out_;
     putc(character->char_value_, out);    
     fflush(out);
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 Object *write_proc(Object *arguments) {
@@ -777,7 +780,7 @@ Object *write_proc(Object *arguments) {
     ini << out;
     write(ini, exp);
     ini.flush();
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 Object *error_proc(Object *arguments) {
@@ -870,29 +873,28 @@ void populate_environment(Object *env)
 
 void init(void)
 {
-	false_obj = new Object(false, TT_BOOLEAN);
-	true_obj  = new Object(true, TT_BOOLEAN);
-	the_empty_list = new Object(TT_THE_EMPTY_LIST);
-	symbol_table = the_empty_list;
-	quote_symbol = make_symbol("quote");
-	define_symbol = make_symbol("define");
-	set_symbol   = make_symbol("set!");
-	ok_symbol    = make_symbol("ok");
-	the_empty_environment = the_empty_list;
-	the_global_environment = setup_environment();
-	if_symbol = make_symbol("if");
-	lambda_symbol = make_symbol("lambda");
-	begin_symbol  = make_symbol("begin");
-	cond_symbol   = make_symbol("cond");
-	else_symbol   = make_symbol("else");
-	let_symbol    = make_symbol("let");
-	and_symbol    = make_symbol("and");
-	or_symbol     = make_symbol("or");
+	global::false_obj = new Object(false, TT_BOOLEAN);
+	global::true_obj  = new Object(true, TT_BOOLEAN);
+	global::the_empty_list = new Object(TT_THE_EMPTY_LIST);
+	global::symbol_table = global::the_empty_list;
+	global::quote_symbol = make_symbol("quote");
+	global::define_symbol = make_symbol("define");
+	global::set_symbol   = make_symbol("set!");
+	global::ok_symbol    = make_symbol("ok");
+	global::the_empty_environment = global::the_empty_list;
+	global::if_symbol = make_symbol("if");
+	global::lambda_symbol = make_symbol("lambda");
+	global::begin_symbol  = make_symbol("begin");
+	global::cond_symbol   = make_symbol("cond");
+	global::else_symbol   = make_symbol("else");
+	global::let_symbol    = make_symbol("let");
+	global::and_symbol    = make_symbol("and");
+	global::or_symbol     = make_symbol("or");
 
-	eof_object = new Object(TT_EOF_OBJECT);
+	global::eof_object = new Object(TT_EOF_OBJECT);
 
-	the_empty_environment = the_empty_list;
-	the_global_environment = make_environment();
+	global::the_empty_environment = global::the_empty_list;
+	global::the_global_environment = make_environment();
 }
 /***************************** READ ******************************/
 
@@ -991,9 +993,9 @@ Object *read(std::istream &in)
 		c = in.get();
 		switch(c) {
 			case 't':
-				return true_obj;
+				return global::true_obj;
 			case 'f':
-				return false_obj;
+				return global::false_obj;
 			case '\\':
 				return read_character(in);
 			default:
@@ -1070,7 +1072,7 @@ Object *read(std::istream &in)
 	} else if (c == '(') {
 		return read_pair(in);
 	} else if (c == '\'') {
-		return new Object(quote_symbol, new Object(read(in), the_empty_list));
+		return new Object(global::quote_symbol, new Object(read(in), global::the_empty_list));
 	} else {
 		char i = c;	
 		std::cerr << "unexpected character " << i << ". Expecting ')' " << std::endl;
@@ -1106,7 +1108,7 @@ static bool is_tagged_list(Object *expression, Object *tag)
 
 static bool is_quoted(Object *expression)
 {
-	return is_tagged_list(expression, quote_symbol);
+	return is_tagged_list(expression, global::quote_symbol);
 }
 
 
@@ -1118,7 +1120,7 @@ static Object *text_of_quotation(Object *exp)
 
 static bool  is_assignment(Object *exp)
 {
-    return is_tagged_list(exp, set_symbol);
+    return is_tagged_list(exp, global::set_symbol);
 }
 
 static Object *assignment_variable(Object *exp) 
@@ -1133,7 +1135,7 @@ static Object *assignment_value(Object *exp)
 
 static char is_definition(Object *exp)
 {
-    return is_tagged_list(exp, define_symbol);
+    return is_tagged_list(exp, global::define_symbol);
 }
 
 Object *make_lambda(Object *parameters, Object *body);
@@ -1149,7 +1151,7 @@ Object *definition_value(Object *exp)
 
 
 static bool is_cond(Object *exp) {
-    return is_tagged_list(exp, cond_symbol);
+    return is_tagged_list(exp, global::cond_symbol);
 }
 
 Object *cond_clauses(Object *exp) {
@@ -1165,7 +1167,7 @@ Object *cond_actions(Object *clause) {
 }
 
 char is_cond_else_clause(Object *clause) {
-    return cond_predicate(clause) == else_symbol;
+    return cond_predicate(clause) == global::else_symbol;
 }
 
 
@@ -1185,16 +1187,16 @@ Object *sequence_to_exp(Object *seq) {
         return first_exp(seq);
     }
     else {
-        return new Object(begin_symbol, seq);
+        return new Object(global::begin_symbol, seq);
     }
 }
 
 Object *make_if(Object *predicate, Object *consequent, Object *alternative) 
 {
-    return new Object(if_symbol,
+    return new Object(global::if_symbol,
                 new Object(predicate,
                      new Object(consequent,
-                          new Object(alternative, the_empty_list))));
+                          new Object(alternative, global::the_empty_list))));
 }
 
 Object *expand_clauses(Object *clauses) {
@@ -1202,7 +1204,7 @@ Object *expand_clauses(Object *clauses) {
     Object *rest;
     
     if (is_the_empty_list(clauses)) {
-        return false_obj;
+        return global::false_obj;
     }
     else {
         first = car(clauses);
@@ -1232,7 +1234,7 @@ Object *cond_to_if(Object *exp) {
 
 static bool is_if(Object *expression)
 {
-	return is_tagged_list(expression, if_symbol);
+	return is_tagged_list(expression, global::if_symbol);
 }
 
 //'if' symbol specific
@@ -1251,7 +1253,7 @@ static Object *if_consequent(Object *exp)
 static Object *if_alternative(Object *exp)
 {
 	if (is_the_empty_list(cdddr(exp))) {
-		return false_obj;
+		return global::false_obj;
 	} else {
 		return cadddr(exp);
 	}
@@ -1259,12 +1261,12 @@ static Object *if_alternative(Object *exp)
 
 Object *make_lambda(Object *parameters, Object *body)
 {
-    return new Object(lambda_symbol, new Object(parameters, body));
+    return new Object(global::lambda_symbol, new Object(parameters, body));
 }
 
 
 char is_lambda(Object *exp) {
-    return is_tagged_list(exp, lambda_symbol);
+    return is_tagged_list(exp, global::lambda_symbol);
 }
 
 Object *lambda_parameters(Object *exp) {
@@ -1314,7 +1316,7 @@ static Object *rest_operands(Object *ops)
 }
 
 char is_let(Object *exp) {
-    return is_tagged_list(exp, let_symbol);
+    return is_tagged_list(exp, global::let_symbol);
 }
 
 Object *let_bindings(Object *exp) {
@@ -1339,7 +1341,7 @@ Object *binding_argument(Object *binding)
 Object *bindings_parameters(Object *bindings) 
 {
     return is_the_empty_list(bindings) ?
-               the_empty_list :
+               global::the_empty_list :
                new Object(binding_parameter(car(bindings)),
                     bindings_parameters(cdr(bindings)));
 }
@@ -1347,7 +1349,7 @@ Object *bindings_parameters(Object *bindings)
 Object *bindings_arguments(Object *bindings) 
 {
     return is_the_empty_list(bindings) ?
-               the_empty_list :
+               global::the_empty_list :
                new Object(binding_argument(car(bindings)),
                     bindings_arguments(cdr(bindings)));
 }
@@ -1368,7 +1370,7 @@ Object *let_to_application(Object *exp)
 }
 
 char is_and(Object *exp) {
-    return is_tagged_list(exp, and_symbol);
+    return is_tagged_list(exp, global::and_symbol);
 }
 
 Object *and_tests(Object *exp) {
@@ -1376,7 +1378,7 @@ Object *and_tests(Object *exp) {
 }
 
 char is_or(Object *exp) {
-    return is_tagged_list(exp, or_symbol);
+    return is_tagged_list(exp, global::or_symbol);
 }
 
 Object *or_tests(Object *exp) {
@@ -1395,7 +1397,7 @@ Object *eval(Object *exp, Object *env);
 Object *list_of_values(Object *exps, Object *env)
 {
 	if (is_no_operands(exps)) {
-		return the_empty_list;
+		return global::the_empty_list;
 	} else {
 		return new Object(eval(first_operand(exps), env),
 				list_of_values(rest_operands(exps), env));
@@ -1407,7 +1409,7 @@ static Object *eval_assignment(Object *exp, Object *env)
     set_variable_value(assignment_variable(exp),
                        eval(assignment_value(exp), env),
                        env);
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 Object *definition_variable(Object *exp) {
@@ -1425,7 +1427,7 @@ static Object *eval_definition(Object *exp, Object *env)
     define_variable(definition_variable(exp),
                     eval(definition_value(exp), env),
                     env);
-    return ok_symbol;
+    return global::ok_symbol;
 }
 
 
@@ -1436,7 +1438,7 @@ Object *begin_actions(Object *exp) {
 
 char is_begin(Object *exp)
 {
-	return is_tagged_list(exp, begin_symbol);
+	return is_tagged_list(exp, global::begin_symbol);
 }
 
 
@@ -1512,7 +1514,7 @@ tailcall:
 	} else if (is_and(exp)) {
 		exp = and_tests(exp);
 		if (is_the_empty_list(exp)) {
-		    return true_obj;
+		    return global::true_obj;
 		}
 		while (!is_last_exp(exp)) {
 		    Object *result = eval(first_exp(exp), env);
@@ -1527,7 +1529,7 @@ tailcall:
 		else if (is_or(exp)) {
 		exp = or_tests(exp);
 		if (is_the_empty_list(exp)) {
-		    return false_obj;
+		    return global::false_obj;
 		}
 		while (!is_last_exp(exp)) {
 		    Object *result = eval(first_exp(exp), env);
@@ -1564,7 +1566,7 @@ tailcall:
 			       procedure->compound_proc.parameters,
 			       arguments,
 			       procedure->compound_proc.env);
-		    exp = new Object(begin_symbol, procedure->compound_proc.body);
+		    exp = new Object(global::begin_symbol, procedure->compound_proc.body);
 		    goto tailcall;
 		} else {
 		    fprintf(stderr, "unknown procedure type\n");

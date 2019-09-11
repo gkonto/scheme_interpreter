@@ -145,7 +145,7 @@ class Test_SchemeInterpreter
 			std::cout << "[+] Test: " << input << std::endl;
 			Object *exp = read(it);
 
-			std::string got = write(std::cout, eval(exp, the_global_environment));
+			std::string got = write(std::cout, eval(exp, global::the_global_environment));
 
 			if (expecting.compare(got)) {
 				std::cout << "Error in test!" << std::endl;
