@@ -889,6 +889,8 @@ void init(void)
 	and_symbol    = make_symbol("and");
 	or_symbol     = make_symbol("or");
 
+	eof_object = new Object(TT_EOF_OBJECT);
+
 	the_empty_environment = the_empty_list;
 	the_global_environment = make_environment();
 }

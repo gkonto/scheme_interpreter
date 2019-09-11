@@ -9,18 +9,18 @@
 
 enum ObjectType
 {
-	TT_FIXNUM,
-	TT_BOOLEAN,
-	TT_CHARACTER,
-	TT_STRING,
-	TT_THE_EMPTY_LIST,
-	TT_SYMBOL,
-	TT_PAIR,
-	TT_PRIMITIVE_PROC,
-	TT_COMPOUND_PROC,
-	TT_INPUT_PORT,
-	TT_OUTPUT_PORT,
-	TT_EOF_OBJECT,
+	TT_FIXNUM,         // class Fixnum
+	TT_BOOLEAN,        // class Boolean
+	TT_CHARACTER,      // class Char
+	TT_STRING,         // class String
+	TT_THE_EMPTY_LIST, // class EmptyList
+	TT_SYMBOL,         // class Symbol
+	TT_PAIR,           // class Pair
+	TT_PRIMITIVE_PROC, // class PrimitiveProc
+	TT_COMPOUND_PROC,  // class CompoundProc
+	TT_INPUT_PORT,     // class InputPort
+	TT_OUTPUT_PORT,    // class OutputPort
+	TT_EOF_OBJECT,     // class Eof
 
 	TT_MAX
 };
@@ -121,6 +121,7 @@ struct Object
 		FILE *in_;
 		FILE *out_;
 
+	// TODO type not needed.. 
 	ObjectType type_;
 };
 
