@@ -1655,9 +1655,20 @@ std::string write(std::ostream &out, Object *obj)
 			      return ret;
 		      }
 		case TT_PRIMITIVE_PROC:
+			      out << "#<primitive-procedure>";
+			      return "#<primitive-procedure>";
 		case TT_COMPOUND_PROC:
-		      out << "#<procedure>";
-		      return "#<procedure>";
+		      out << "#<compound-procedure>";
+		      return "#<compound-procedure>";
+		case TT_INPUT_PORT:
+		      out << "#<input-port>";
+		      return "#<input-port>";
+		case TT_OUTPUT_PORT:
+		      out << "#<output-port>";
+		      return "#<output-port>";
+		case TT_EOF_OBJECT:
+		      out << "#<eof>";
+		      return "#<eof>";
 		default: {
 			std::cerr << "cannot write unknown type" << std::endl;
 			exit(1);
