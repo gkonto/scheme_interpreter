@@ -7,6 +7,7 @@ cmake_policy(SET CMP0000 OLD)
 
 set(HEADERS
 	../object.hpp
+	../node.hpp
    )
 
 set(SOURCES 
