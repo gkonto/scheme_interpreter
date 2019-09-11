@@ -110,7 +110,7 @@ class Eof
 	public:
 		Eof() {}
 	private:
-}
+};
 
 
 

@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <fstream>
 #include "object.hpp"
+#include "node.hpp"
 
 /**************************** MODEL ******************************/
 

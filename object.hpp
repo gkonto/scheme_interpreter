@@ -25,13 +25,13 @@ enum ObjectType
 	TT_MAX
 };
 
-struct Pair
+struct Pair_old
 {
 	struct Object *car;
 	struct Object *cdr;
 };
 
-struct CompoundProc
+struct CompoundProc_old
 {
 	struct Object *parameters;
 	struct Object *body;
@@ -115,9 +115,9 @@ struct Object
 		bool bool_value_;
 		char char_value_;
 		std::string str_value_;
-		Pair pair;
+		Pair_old pair;
 		PrimitiveProcFun fun_;
-		CompoundProc compound_proc;
+		CompoundProc_old compound_proc;
 		FILE *in_;
 		FILE *out_;
 
