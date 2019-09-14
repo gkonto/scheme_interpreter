@@ -123,6 +123,8 @@ class Pair : public Node
 		bool is_pair() { return true; }
 		Node *car() { return car_; }
 		Node *cdr() { return cdr_; }
+		void set_car(Node *p_node) { car_ = p_node; }
+		void set_cdr(Node *p_node) { cdr_ = p_node; }
 
 		std::string write(std::ostream &out);
 	private:

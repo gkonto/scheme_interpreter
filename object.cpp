@@ -30,9 +30,6 @@ namespace global {
 	Object *and_symbol             = 0;
 	Object *or_symbol              = 0;
 	Object *eof_object             = 0;
-
-	//Boolean *n_false_obj = 0;
-	//Boolean *n_true_obj = 0; 
 };
 
 Object *make_environment(void);
