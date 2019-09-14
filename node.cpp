@@ -15,19 +15,59 @@ namespace
 	class SymbolTable
 	{
 		public:
-			static Node *get();
+			static SymbolTable &get();
+
+			Node *get_element() const { return table_; }
+			Symbol *find_symbol(const std::string &symbol) const;
+
+			static Symbol *make_symbol(const std::string &value);
 		private:
 			SymbolTable() : table_(gb::n_the_empty_list) {}
+			void add_symbol(Node *p_symbol);
 
 			Node *table_;
 	};
 }
 
-Node *SymbolTable::get()
+SymbolTable &SymbolTable::get()
 {
 	static SymbolTable table;
 
-	return table.table_;
+	return table;
+}
+
+void SymbolTable::add_symbol(Node *p_symbol)
+{
+	table_ = new Pair(p_symbol, table_);
+}
+
+Symbol *SymbolTable::find_symbol(const std::string &symbol) const
+{
+	Node *element = get_element();
+
+	while (!element->is_the_empty_list())
+	{
+		//TODO I dont like this
+		Symbol *car_obj = static_cast<Symbol *>(element->car());
+		if (!car_obj->is_same_label(symbol)) {
+			return car_obj;
+		}
+		element = element->cdr();
+	}
+	return 0;
+}
+
+Symbol *SymbolTable::make_symbol(const std::string &value)
+{
+	SymbolTable &s_table = get();
+	Symbol *found_s = s_table.find_symbol(value);
+
+	if (!found_s) {
+		Symbol *found_s = new Symbol(value);
+		s_table.add_symbol(found_s);
+	}
+
+	return found_s;
 }
 
 
@@ -94,6 +134,11 @@ std::string EmptyList::write(std::ostream &out)
 {
 	out << "()";	
 	return "()";
+}
+
+Symbol::Symbol(const std::string &value)
+	: label_(value) 
+{
 }
 
 std::string Symbol::write(std::ostream &out)

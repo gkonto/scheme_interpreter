@@ -1,6 +1,8 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
+#include <iostream> 
+
 //This is abstract
 class Node
 {
@@ -20,6 +22,22 @@ class Node
 
 		virtual bool is_true()  { return false; }
 		virtual bool is_false() { return false; }
+
+		virtual Node *car()
+		{
+			//FIXME i dont like it
+			std::cerr << "Error: Node: car()" << std::endl;
+			std::cerr << "Should never reach" << std::endl;
+			exit(1);
+		}
+
+		virtual Node *cdr()
+		{
+			//FIXME i dont like it
+			std::cerr << "Error: Node: car()" << std::endl;
+			std::cerr << "Should never reach" << std::endl;
+			exit(1);
+		}
 
 		virtual std::string write(std::ostream &out) = 0;
 };
@@ -83,8 +101,14 @@ class EmptyList : public Node
 class Symbol : public Node
 {
 	public:
-		explicit Symbol(const std::string &label) : label_(label) {} 
+		explicit Symbol(const std::string &label);
 		bool is_symbol() { return true; }
+		std::string label() { return label_; }
+
+		bool is_same_label(const std::string &value) const
+		{
+			return !label_.compare(value);
+		}
 
 		std::string write(std::ostream &out);
 	private:
