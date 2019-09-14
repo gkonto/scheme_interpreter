@@ -3,10 +3,37 @@
 #include "node.hpp"
 #include "object.hpp"
 
+namespace gb
+{
+	Boolean *n_false_obj  = new Boolean(false);
+	Boolean *n_true_obj   = new Boolean(true);
+	EmptyList *n_the_empty_list = new EmptyList();
+}
+
+namespace
+{
+	class SymbolTable
+	{
+		public:
+			static Node *get();
+		private:
+			SymbolTable() : table_(gb::n_the_empty_list) {}
+
+			Node *table_;
+	};
+}
+
+Node *SymbolTable::get()
+{
+	static SymbolTable table;
+
+	return table.table_;
+}
+
 
 bool Boolean::is_false()
 {
-	return this == global::n_false_obj;
+	return this == gb::n_false_obj;
 }
 
 bool Boolean::is_true()

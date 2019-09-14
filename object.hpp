@@ -129,8 +129,9 @@ struct Object
 // OBJECT DECLARATIONS 
 //extern make global static
 namespace global {
-	extern Boolean *n_false_obj;
-	extern Boolean *n_true_obj; 
+//	extern Boolean   *n_false_obj;
+//	extern Boolean   *n_true_obj; 
+//	extern EmptyList *n_the_empty_list;
 
 	extern Object *false_obj;
 	extern Object *true_obj; 

@@ -1,7 +1,6 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-
 //This is abstract
 class Node
 {
@@ -169,6 +168,14 @@ class Eof
 		std::string write(std::ostream &out);
 	private:
 };
+
+
+namespace gb
+{
+	extern Boolean   *n_false_obj;
+	extern Boolean   *n_true_obj; 
+	extern EmptyList *n_the_empty_list;
+}
 
 
 
