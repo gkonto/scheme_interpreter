@@ -1,0 +1,143 @@
+#include <string>
+#include <sstream>
+#include "node.hpp"
+#include "object.hpp"
+
+
+bool Boolean::is_false()
+{
+	return this == global::n_false_obj;
+}
+
+bool Boolean::is_true()
+{
+	return !is_false();
+}
+
+std::string Fixnum::write(std::ostream &out)
+{
+	std::stringstream ss;
+	ss << value_;
+	out << ss.str();
+
+	return ss.str();
+}
+
+std::string Boolean::write(std::ostream &out)
+{
+	std::stringstream ss;
+
+	std::string val = is_false() ? "#f" : "#t";
+	ss << val;
+	out << val;
+	return ss.str();
+}
+
+std::string Char::write(std::ostream &out)
+{
+	char c = value_;
+	std::string ret("#\\");
+
+	switch (c) {
+		case '\n':
+			ret.append("newline");
+			out << ret;
+			return ret;
+		case ' ':
+			ret.append("space");
+			out << ret;
+			return ret;
+		default:
+			ret += c;
+			out << ret;
+			return ret;
+
+	}
+}
+
+std::string String::write(std::ostream &out)
+{
+	std::string str = value_;
+	out << str;
+
+	return str;
+}
+
+std::string EmptyList::write(std::ostream &out)
+{
+	out << "()";	
+	return "()";
+}
+
+std::string Symbol::write(std::ostream &out)
+{
+	out << label_;
+	return label_;
+}
+
+std::string Pair::write(std::ostream &out)
+{
+	std::string ret = "(";
+	ret += write_pair(out);
+	ret += ")";
+	out << ret;
+
+	return ret;
+}
+
+std::string Pair::write_pair(std::ostream &out)
+{
+	Node *car_obj = car();
+	Node *cdr_obj = cdr();
+
+	std::string ret(car_obj->write(out));
+
+	if (cdr_obj->is_pair()) {
+		ret += " ";
+		//FIXME: I dont like this cast
+		Pair *cdr = static_cast<Pair *>(cdr_obj);
+		ret += cdr->write_pair(out);
+	} else if (cdr_obj->is_the_empty_list()) {
+		return ret;
+	} else {
+		ret += " . ";
+		ret += cdr_obj->write(out);
+	}
+
+	return ret;
+
+}
+
+std::string PrimitiveProc::write(std::ostream &out)
+{
+	out << "#<primitive-procedure>";
+	return "#<primitive-procedure>";
+}
+
+std::string CompoundProc::write(std::ostream &out)
+{
+	out << "#<compound-procedure>";
+	return "#<compound-procedure>";
+}
+
+std::string InputPort::write(std::ostream &out)
+{
+	out << "#<input-port>";
+	return "#<input-port>";
+}
+
+std::string OutputPort::write(std::ostream &out)
+{
+	out << "#<output-port>";
+	return "#<output-port>";
+}
+
+std::string Eof::write(std::ostream &out)
+{
+	out << "#<eof>";
+	return "#<eof>";
+}
+
+
+
+

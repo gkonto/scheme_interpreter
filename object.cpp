@@ -30,6 +30,9 @@ namespace global {
 	Object *and_symbol             = 0;
 	Object *or_symbol              = 0;
 	Object *eof_object             = 0;
+
+	Boolean *n_false_obj = 0;
+	Boolean *n_true_obj = 0;
 };
 
 Object *make_environment(void);
@@ -874,6 +877,9 @@ void populate_environment(Object *env)
 
 void init(void)
 {
+	global::n_false_obj = new Boolean(false);
+	global::n_true_obj  = new Boolean(true);
+
 	global::false_obj = new Object(false, TT_BOOLEAN);
 	global::true_obj  = new Object(true, TT_BOOLEAN);
 	global::the_empty_list = new Object(TT_THE_EMPTY_LIST);
@@ -1605,6 +1611,17 @@ std::string write_pair(std::ostream &out, Object *pair)
 
 std::string write(std::ostream &out, Object *obj)
 {
+	/* 
+	 * TODO
+	 * if (obj)
+	 * {
+	 * 	obj->write(out);
+	 *
+	 * } else {
+	 * 	std::cerr << "cannot write unknown type" << std::endl;
+	 * 	exit(1);
+	 * }
+	 */
 	std::stringstream ss;
 
 	switch (obj->type_)

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "node.hpp"
 enum ObjectType
 {
 	TT_FIXNUM,         // class Fixnum
@@ -128,21 +129,24 @@ struct Object
 // OBJECT DECLARATIONS 
 //extern make global static
 namespace global {
-extern Object *false_obj;
-extern Object *true_obj; 
-extern Object *the_empty_list;
-extern Object *symbol_table;
-extern Object *quote_symbol;
-extern Object *set_symbol;
-extern Object *ok_symbol;
-extern Object *the_empty_environment;
-extern Object *the_global_environment;
-extern Object *if_symbol;
-extern Object *lambda_symbol;
-extern Object *let_symbol;
-extern Object *and_symbol;
-extern Object *or_symbol;
-extern Object *eof_object;
+	extern Boolean *n_false_obj;
+	extern Boolean *n_true_obj; 
+
+	extern Object *false_obj;
+	extern Object *true_obj; 
+	extern Object *the_empty_list;
+	extern Object *symbol_table;
+	extern Object *quote_symbol;
+	extern Object *set_symbol;
+	extern Object *ok_symbol;
+	extern Object *the_empty_environment;
+	extern Object *the_global_environment;
+	extern Object *if_symbol;
+	extern Object *lambda_symbol;
+	extern Object *let_symbol;
+	extern Object *and_symbol;
+	extern Object *or_symbol;
+	extern Object *eof_object;
 };
 
 
