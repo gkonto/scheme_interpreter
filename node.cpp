@@ -3,13 +3,6 @@
 #include "node.hpp"
 #include "object.hpp"
 
-namespace gb
-{
-	Boolean *n_false_obj  = new Boolean(false);
-	Boolean *n_true_obj   = new Boolean(true);
-	EmptyList *n_the_empty_list = new EmptyList();
-}
-
 namespace
 {
 	class SymbolTable
@@ -22,11 +15,42 @@ namespace
 
 			static Symbol *make_symbol(const std::string &value);
 		private:
-			SymbolTable() : table_(gb::n_the_empty_list) {}
+			SymbolTable();
 			void add_symbol(Node *p_symbol);
 
 			Node *table_;
 	};
+}
+
+namespace gb
+{
+	Boolean *n_false_obj  = new Boolean(false);
+	Boolean *n_true_obj   = new Boolean(true);
+	EmptyList *n_the_empty_list = new EmptyList();
+
+	Symbol *n_quote_symbol  = SymbolTable::make_symbol("quote");
+	Symbol *n_define_symbol = SymbolTable::make_symbol("define");
+	Symbol *n_set_symbol    = SymbolTable::make_symbol("set!");
+	Symbol *n_ok_symbol     = SymbolTable::make_symbol("ok");
+
+	Node *the_empty_environment = n_the_empty_list;
+	Symbol *n_if_symbol = SymbolTable::make_symbol("if");
+	Symbol *n_lambda_symbol = SymbolTable::make_symbol("lambda");
+	Symbol *n_begin_symbol  = SymbolTable::make_symbol("begin");
+	Symbol *n_cond_symbol   = SymbolTable::make_symbol("cond");
+	Symbol *n_else_symbol   = SymbolTable::make_symbol("else");
+	Symbol *n_let_symbol    = SymbolTable::make_symbol("let");
+	Symbol *n_and_symbol    = SymbolTable::make_symbol("and");
+	Symbol *n_or_symbol     = SymbolTable::make_symbol("or");
+
+	Eof *n_eof_object = new Eof();
+}
+
+
+
+SymbolTable::SymbolTable() 
+	: table_(gb::n_the_empty_list) 
+{
 }
 
 SymbolTable &SymbolTable::get()

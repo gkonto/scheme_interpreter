@@ -882,11 +882,10 @@ void init(void)
 	//global::n_the_empty_list = new EmptyList();
 
 
-
-
 	global::false_obj = new Object(false, TT_BOOLEAN); // done
 	global::true_obj  = new Object(true, TT_BOOLEAN);  // done
 	global::the_empty_list = new Object(TT_THE_EMPTY_LIST); //done
+
 	global::symbol_table = global::the_empty_list;
 	global::quote_symbol = make_symbol("quote");
 	global::define_symbol = make_symbol("define");
