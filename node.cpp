@@ -3,6 +3,38 @@
 #include "node.hpp"
 #include "object.hpp"
 
+static Node *make_frame(Node *vars, Node *vals)
+{
+	return new Pair(vars, vals);
+}
+
+static Node *extend_environment(Node *vars, Node *vals, Node *base_env)
+{
+	return new Pair(make_frame(vars, vals), base_env);
+}
+
+static Node *setup_environment()
+{
+	Node *initial_env = extend_environment(
+			gb::n_the_empty_list,
+			gb::n_the_empty_list,
+			gb::n_the_empty_environment);
+
+	return initial_env;
+}
+
+void populate_environment(Node *env)
+{
+}
+
+static Node *make_environment()
+{
+	Node *env = setup_environment();
+	populate_environment(env);
+
+	return env;
+}
+
 namespace gb
 {
 	Boolean *n_false_obj  = new Boolean(false);
@@ -25,8 +57,10 @@ namespace gb
 	Symbol *n_or_symbol     = SymbolTable::make_symbol("or");
 
 	Eof *n_eof_object = new Eof();
-}
 
+	Node *n_the_global_environment = make_environment(); // TODO class Environment
+	Node *n_the_empty_environment = n_the_empty_list;
+}
 
 
 SymbolTable::SymbolTable() 
@@ -139,6 +173,12 @@ std::string EmptyList::write(std::ostream &out)
 {
 	out << "()";	
 	return "()";
+}
+
+Node *EmptyList::eval(Node *env)
+{
+	std::cout << "Entering EmptyList::eval()" << std::endl;
+	return nullptr;
 }
 
 Symbol::Symbol(const std::string &value)

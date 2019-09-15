@@ -888,7 +888,6 @@ void init(void)
 	global::define_symbol = make_symbol("define");
 	global::set_symbol   = make_symbol("set!");
 	global::ok_symbol    = make_symbol("ok");
-	global::the_empty_environment = global::the_empty_list;
 	global::if_symbol = make_symbol("if");
 	global::lambda_symbol = make_symbol("lambda");
 	global::begin_symbol  = make_symbol("begin");

@@ -40,6 +40,7 @@ class Node
 		}
 
 		virtual std::string write(std::ostream &out) = 0;
+		virtual Node *eval(Node *env) = 0;
 };
 
 class Fixnum : public Node
@@ -105,6 +106,7 @@ class EmptyList : public List
 		bool is_the_empty_list() { return true; }
 
 		std::string write(std::ostream &out);
+		Node *eval(Node *env);
 	private:
 };
 
@@ -214,6 +216,8 @@ namespace gb
 	extern Boolean   *n_true_obj; 
 	extern EmptyList *n_the_empty_list;
 	extern Symbol    *n_quote_symbol;
+	extern Node      *n_the_global_environment;
+	extern Node      *n_the_empty_environment;
 }
 
 class SymbolTable
