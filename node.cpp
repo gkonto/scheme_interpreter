@@ -5,21 +5,6 @@
 
 namespace
 {
-	class SymbolTable
-	{
-		public:
-			static SymbolTable &get();
-
-			Node *get_element() const { return table_; }
-			Symbol *find_symbol(const std::string &symbol) const;
-
-			static Symbol *make_symbol(const std::string &value);
-		private:
-			SymbolTable();
-			void add_symbol(Node *p_symbol);
-
-			Node *table_;
-	};
 }
 
 namespace gb
@@ -235,5 +220,34 @@ std::string Eof::write(std::ostream &out)
 }
 
 
+Node *Fixnum::eval(Node *env)
+{
+	return this;
+}
 
+Node *Boolean::eval(Node *env)
+{
+	return this;
+}
+
+Node *Char::eval(Node *env)
+{
+	return this;
+}
+
+Node *String::eval(Node *env)
+{
+	return this;
+}
+
+Node *Symbol::eval(Node *env)
+{
+	return nullptr;
+	//return lookup_variable_value(env);
+}
+
+Node *Pair::eval(Node *env)
+{
+	return nullptr;
+}
 

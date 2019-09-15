@@ -1488,17 +1488,17 @@ tailcall:
 		return exp;
 	} else if (is_variable(exp)) {
 		return lookup_variable_value(exp, env);
-	} else if (is_quoted(exp)) {
+	} else if (is_quoted(exp)) { // for pair
 		return text_of_quotation(exp);
-	} else if (is_assignment(exp)) {
+	} else if (is_assignment(exp)) { // for pair
 		return eval_assignment(exp, env);
-	} else if (is_definition(exp)) {
+	} else if (is_definition(exp)) { // for pair
 		return eval_definition(exp, env);
-	} else if (is_if(exp)) {
+	} else if (is_if(exp)) { // for pair
 		exp = is_true(eval(if_predicate(exp), env)) ? if_consequent(exp) : if_alternative(exp);
 		//TODO return eval(exp, env) ?
 		goto tailcall;
-	} else if (is_lambda(exp)) {
+	} else if (is_lambda(exp)) { // for pair
 		return make_compound_proc(lambda_parameters(exp),
 				lambda_body(exp),
 				env);

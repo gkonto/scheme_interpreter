@@ -10,12 +10,14 @@ cmake_policy(SET CMP0000 OLD)
 set(HEADERS
 	object.hpp
 	node.hpp
+	parser.hpp
    )
 
 set(SOURCES 
 	object.cpp
 	scheme.cpp
 	node.cpp
+	parser.cpp
     )
 
 ADD_EXECUTABLE(scheme_repl ${HEADERS} ${SOURCES})

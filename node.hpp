@@ -47,6 +47,7 @@ class Fixnum : public Node
 	public:
 		explicit Fixnum(long val) : value_(val) {}
 		bool is_fixnum() { return true; }
+		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);
 	private:
@@ -60,6 +61,7 @@ class Boolean : public Node
 		bool is_boolean() { return true; }
 		bool is_true();
 		bool is_false();
+		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);
 	private:
@@ -71,6 +73,7 @@ class Char : public Node
 	public:
 		explicit Char(char val) : value_(val) {}
 		bool is_character() { return true; }
+		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);
 	private:
@@ -82,13 +85,20 @@ class String : public Node
 	public:
 		explicit String(const std::string &val) : value_(val) {}
 		bool is_string() { return true; }
+		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);
 	private:
 		std::string value_;
 };
 
-class EmptyList : public Node
+class List : public Node
+{
+	public:
+	private:
+};
+
+class EmptyList : public List
 {
 	public:
 		explicit EmptyList() {}
@@ -104,6 +114,7 @@ class Symbol : public Node
 		explicit Symbol(const std::string &label);
 		bool is_symbol() { return true; }
 		std::string label() { return label_; }
+		Node *eval(Node *env);
 
 		bool is_same_label(const std::string &value) const
 		{
@@ -116,7 +127,7 @@ class Symbol : public Node
 
 };
 
-class Pair : public Node
+class Pair : public List
 {
 	public:
 		explicit Pair(Node *car, Node *cdr) : car_(car), cdr_(cdr) {}
@@ -124,7 +135,8 @@ class Pair : public Node
 		Node *car() { return car_; }
 		Node *cdr() { return cdr_; }
 		void set_car(Node *p_node) { car_ = p_node; }
-		void set_cdr(Node *p_node) { cdr_ = p_node; }
+		void set_cdr(List *p_node) { cdr_ = p_node; }
+		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);
 	private:
@@ -201,7 +213,24 @@ namespace gb
 	extern Boolean   *n_false_obj;
 	extern Boolean   *n_true_obj; 
 	extern EmptyList *n_the_empty_list;
+	extern Symbol    *n_quote_symbol;
 }
+
+class SymbolTable
+{
+	public:
+		static SymbolTable &get();
+
+		Node *get_element() const { return table_; }
+		Symbol *find_symbol(const std::string &symbol) const;
+
+		static Symbol *make_symbol(const std::string &value);
+	private:
+		SymbolTable();
+		void add_symbol(Node *p_symbol);
+
+		List *table_;
+};
 
 
 
