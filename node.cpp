@@ -3,10 +3,6 @@
 #include "node.hpp"
 #include "object.hpp"
 
-namespace
-{
-}
-
 namespace gb
 {
 	Boolean *n_false_obj  = new Boolean(false);

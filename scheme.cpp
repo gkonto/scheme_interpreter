@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include "object.hpp"
 
+#define NEW_FUNCTION
+
 int main(void) 
 {
 	printf("Welcome to Bootstrap Scheme. "
