@@ -47,6 +47,7 @@ class Test_SchemeInterpreter
 			//symbols
 			//_test("asdf", "asdf");
 
+			/*
 			//quotes
 			_test("(quote a)", "a");
 			_test("'a", "a");
@@ -129,6 +130,7 @@ class Test_SchemeInterpreter
 			_test("(close-output-port out)", "ok");
 			//_test("(load \"program.scm\")", "program-loaded"); // FIXME issue in this test: "program.scm" file is read, not program.scm as should.
 			//FIXME is program.scm is empty file, there is an error..
+			*/
 		}
 
 
