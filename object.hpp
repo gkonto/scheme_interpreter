@@ -1,6 +1,8 @@
 #ifndef SCHEME_HPP
 #define SCHEME_HPP
 
+#define NEW_FUNCTION
+
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>

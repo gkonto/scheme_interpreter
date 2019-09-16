@@ -8,11 +8,14 @@ cmake_policy(SET CMP0000 OLD)
 set(HEADERS
 	../object.hpp
 	../node.hpp
+	../parser.hpp
    )
 
 set(SOURCES 
 	main.cpp
 	../object.cpp
+	../parser.cpp
+	../node.cpp
     )
 
 ADD_EXECUTABLE(scheme_test ${HEADERS} ${SOURCES})

@@ -6,9 +6,6 @@
 #include "object.hpp"
 #include "parser.hpp"
 
-#define NEW_FUNCTION
-
-
 #ifdef NEW_FUNCTION
 int main(void)
 {
