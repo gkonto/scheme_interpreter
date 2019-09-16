@@ -171,7 +171,8 @@ Node *Parser::read()
 		}
 		if (is_delimiter(c)) {
 			in_.unget();
-			return SymbolTable::make_symbol(buffer); } else {
+			return SymbolTable::make_symbol(buffer); 
+		} else {
 			char i = c;
 			std::cerr << "symbol not followed by delimiter. "
 				"Found " << i << std::endl;

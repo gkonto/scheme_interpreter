@@ -129,6 +129,7 @@ class Symbol : public Node
 
 };
 
+
 class Pair : public List
 {
 	public:
@@ -235,7 +236,6 @@ class SymbolTable
 
 		List *table_;
 };
-
 
 
 #endif 
