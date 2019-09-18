@@ -1497,6 +1497,7 @@ tailcall:
 		exp = is_true(eval(if_predicate(exp), env)) ? if_consequent(exp) : if_alternative(exp);
 		//TODO return eval(exp, env) ?
 		goto tailcall;
+		//
 	} else if (is_lambda(exp)) { // for pair
 		return make_compound_proc(lambda_parameters(exp),
 				lambda_body(exp),

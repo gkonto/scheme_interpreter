@@ -276,17 +276,17 @@ Node *String::eval(Node *env)
 	return this;
 }
 
-Pair *first_frame(Pair *p_pair)
+Node *first_frame(Node *p_pair)
 {
-	return static_cast<Pair *>(p_pair->car());
+	return p_pair->car();
 }
 
-Node *variables(Pair *frame)
+Node *variables(Node *frame)
 {
 	return frame->car();
 }
 
-Node *values(Pair *frame)
+Node *values(Node *frame)
 {
 	return frame->cdr();
 }
@@ -303,7 +303,7 @@ Node *lookup_variable_value(Symbol *var, Node *env)
 	{
 		Pair *pair_env = static_cast<Pair *>(env);
 
-		Pair *frame = first_frame(pair_env);
+		Node *frame = first_frame(pair_env);
 		Node *vars  = variables(frame);
 		Node *vals  = values(frame);
 
@@ -329,16 +329,13 @@ Node *Symbol::eval(Node *env)
 	return lookup_variable_value(this, env);
 }
 
-Node *text_of_quotation(Pair *exp, Node *env)
+Node *text_of_quotation(Node *exp)
 {
-	//FIXME bad code
-	Pair *p_cdr = static_cast<Pair *>(exp->cdr());
-	return p_cdr->car();
+	return exp->cdr()->car();
 }
 
-bool is_tagged_list(Pair *expr, Node *tag)
+bool is_tagged_list(Node *expr, Node *tag)
 {
-	//FIXME bad code
 	return expr->car() == tag;
 }
 
@@ -347,7 +344,7 @@ static void set_variable_value(Node *var, Node *val, Node *env)
 	//FIXME bad code
     while (!env->is_the_empty_list()) {
 	    Pair *pair_env = static_cast<Pair *>(env);
-        Pair *frame = first_frame(pair_env);
+        Node *frame = first_frame(pair_env);
         Node *vars = variables(frame);
         Node *vals = values(frame);
 
@@ -396,14 +393,102 @@ Node *eval_assignment(Pair *exp, Node *env)
     return gb::n_ok_symbol;
 }
 
+Node *definition_variable(Node *exp)
+{
+	Node *p_s = exp->cdr()->car();
+	if (p_s->is_symbol())
+	{
+		return p_s;
+	} else {
+		return exp->cdr()->car()->car();
+	}
+	return nullptr;
+}
+
+Node *make_lambda(Node *parameters, Node *body)
+{
+	return new Pair(gb::n_lambda_symbol, new Pair(parameters, body));
+}
+
+Node *definition_value(Node *exp)
+{
+	Node *p_node = exp->cdr()->car();
+	if (p_node->is_symbol())
+	{
+		return exp->cdr()->cdr()->car();
+	} else {
+		return make_lambda(exp->cdr()->car()->cdr(), exp->cdr()->cdr());
+	}
+}
+
+static void add_binding_to_frame(Node *var, Node *val, Node *frame) {
+    frame->set_car(new Pair(var, frame->car()));
+    frame->set_cdr(new Pair(val, frame->cdr()));
+}
+
+
+static void define_variable(Node *var, Node *val, Node *env) 
+{
+
+    Node *frame = first_frame(env);    
+    Node *vars = variables(frame);
+    Node *vals = values(frame);
+
+    while (!vars->is_the_empty_list()) {
+        if (var == vars->car()) {
+            vals->set_car(vals);
+            return;
+        }
+        vars = vars->cdr();
+        vals = vals->cdr();
+    }
+    add_binding_to_frame(var, val, frame);
+}
+
+
+static Node *eval_definition(Pair *exp, Node *env)
+{
+	Node *def_variable = definition_variable(exp);
+	Node *def_value    = definition_value(exp);
+	define_variable(def_variable, def_value->eval(env), env);
+	return gb::n_ok_symbol;
+}
+
+static bool is_quoted(Node *expression)
+{
+	return is_tagged_list(expression, gb::n_quote_symbol);
+}
+
+static bool is_definition(Node *expression)
+{
+	return is_tagged_list(expression, gb::n_define_symbol);
+}
+
+
 Node *Pair::eval(Node *env)
 {
 	//TODO fix that code
+	if (is_quoted(this))
+	{
+		return text_of_quotation(this);
+	} else if (is_definition(this))
+	{
+		return eval_definition(this, env);
+	}
+	/*
 	if (is_tagged_list(this, gb::n_quote_symbol)) {
 		return text_of_quotation(this, env);
 	} else if (is_tagged_list(this, gb::n_set_symbol)) {
 		return eval_assignment(this, env);
-	}
+	} else if (is_tagged_list(this, gb::n_define_symbol)) {
+		return eval_definition(this, env);	
+	} else if (is_tagged_list(this, gb::n_if_symbol)) {
+		Node *p_pred = cdr()->car();
+		Node *p_exp = p_pred->eval(env);
+		p_exp->is_true() ? if_consequent(exp)->eval(env) ?  if_alternative(exp)->eval();
+	//}
+		*/
+
 
 	std::cerr << "Pair::eval" << std::endl;
 	exit(1);

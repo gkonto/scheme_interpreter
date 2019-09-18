@@ -23,6 +23,20 @@ class Node
 		virtual bool is_true()  { return false; }
 		virtual bool is_false() { return false; }
 
+		virtual void set_car(Node *p_car)
+		{
+			std::cerr << "Error: Node: set_car()" << std::endl;
+			std::cerr << "Should never reach" << std::endl;
+			exit(1);
+		}
+
+		virtual void set_cdr(Node *p_cdr)
+		{
+			std::cerr << "Error: Node: set_cdr()" << std::endl;
+			std::cerr << "Should never reach" << std::endl;
+			exit(1);
+		}
+
 		virtual Node *car()
 		{
 			//FIXME i dont like it
@@ -138,7 +152,7 @@ class Pair : public List
 		Node *car() { return car_; }
 		Node *cdr() { return cdr_; }
 		void set_car(Node *p_node) { car_ = p_node; }
-		void set_cdr(List *p_node) { cdr_ = p_node; }
+		void set_cdr(Node *p_node) { cdr_ = p_node; }
 		Node *eval(Node *env);
 
 		std::string write(std::ostream &out);

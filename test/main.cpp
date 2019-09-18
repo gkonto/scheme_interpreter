@@ -13,7 +13,6 @@ class Test_SchemeInterpreter
 		Test_SchemeInterpreter()
 		{
 			init();
-			/*
 			_test("123", "123");
 			_test("-123", "-123");
 			_test("007", "7");
@@ -47,10 +46,8 @@ class Test_SchemeInterpreter
 			
 			//symbols
 			//_test("asdf", "asdf");
-			*/
 			//quotes
 			_test("(quote a)", "a");
-			/*
 			_test("'a", "a");
 			_test("(quote (0 1 2))", "(0 1 2)");
 			_test("'(0 1 2)", "(0 1 2)");
@@ -66,6 +63,7 @@ class Test_SchemeInterpreter
 
 			//environments
 			_test("(define a 0)", "ok");
+			/*
 			_test("a", "0");
 			_test("(set! a 1)", "ok");
 			_test("a", "1");
