@@ -63,10 +63,10 @@ class Test_SchemeInterpreter
 
 			//environments
 			_test("(define a 0)", "ok");
-			/*
 			_test("a", "0");
 			_test("(set! a 1)", "ok");
 			_test("a", "1");
+			/*
 			_test("(define a 2)", "ok");
 			_test("a", "2");
 			//_test("(set! b 3)", "unbound variable");

@@ -291,7 +291,7 @@ Node *values(Node *frame)
 	return frame->cdr();
 }
 
-Node *enclosing_environment(Pair *env)
+Node *enclosing_environment(Node *env)
 {
 	return env->cdr();
 }
@@ -343,50 +343,42 @@ static void set_variable_value(Node *var, Node *val, Node *env)
 {
 	//FIXME bad code
     while (!env->is_the_empty_list()) {
-	    Pair *pair_env = static_cast<Pair *>(env);
-        Node *frame = first_frame(pair_env);
+        Node *frame = first_frame(env);
         Node *vars = variables(frame);
         Node *vals = values(frame);
 
         while (!vars->is_the_empty_list()) {
-		Pair *temp_vars = static_cast<Pair *>(vars);
-		Pair *temp_vals = static_cast<Pair *>(vals);
-            if (var == temp_vars->car()) {
-                temp_vals->set_car(val);
+            if (var == vars->car()) {
+                vals->set_car(val);
                 return;
             }
 
 
-            vars = temp_vars->cdr();
-            vals = temp_vals->cdr();
+            vars = vars->cdr();
+            vals = vals->cdr();
         }
-        env = enclosing_environment(pair_env);
+        env = enclosing_environment(env);
     }
     std::cerr << "unbound variable" << std::endl;
     exit(1);
 }
 
-static Node *assignment_variable(Pair *exp) 
+static Node *assignment_variable(Node *exp) 
 {
 	//FIXME bad code
-	Pair *p_cdr = static_cast<Pair *>(exp->cdr());
-	return p_cdr->car();
+	return exp->cdr()->car();
 }
 
-static Node *assignment_value(Pair *exp)
+static Node *assignment_value(Node *exp)
 {
-	//FIXME bad code
-	Pair *temp1 = static_cast<Pair *>(exp->cdr());
-	Pair *temp2 = static_cast<Pair *>(temp1->cdr());
-	return temp2->car();
+	return exp->cdr()->cdr()->car();
 }
 
-Node *eval_assignment(Pair *exp, Node *env)
+Node *eval_assignment(Node *exp, Node *env)
 {
 	//TODO really bad code
 	Node *assignment_val = assignment_value(exp);
 	Node *evaluated_assignment = assignment_val->eval(env);
-
 	Node *assignment_var = assignment_variable(exp);
 
     set_variable_value(assignment_var, evaluated_assignment, env);
@@ -464,6 +456,12 @@ static bool is_definition(Node *expression)
 	return is_tagged_list(expression, gb::n_define_symbol);
 }
 
+static bool is_assignment(Node *expression)
+{
+	return is_tagged_list(expression, gb::n_set_symbol);
+}
+
+
 
 Node *Pair::eval(Node *env)
 {
@@ -474,6 +472,9 @@ Node *Pair::eval(Node *env)
 	} else if (is_definition(this))
 	{
 		return eval_definition(this, env);
+	} else if (is_assignment(this))
+	{
+		return eval_assignment(this, env);
 	}
 	/*
 	if (is_tagged_list(this, gb::n_quote_symbol)) {
