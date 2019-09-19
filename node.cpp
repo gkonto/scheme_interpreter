@@ -207,8 +207,8 @@ std::string Pair::write_pair(std::ostream &out)
 	Node *car_obj = car();
 	Node *cdr_obj = cdr();
 
-	std::string ret(car_obj->write(out));
-
+	std::string ret;
+	ret += car_obj->write(out);
 	if (cdr_obj->is_pair()) {
 		ret += " ";
 		//FIXME: I dont like this cast
@@ -297,13 +297,11 @@ Node *enclosing_environment(Node *env)
 }
 
 //TODO class Environment?
-Node *lookup_variable_value(Symbol *var, Node *env)
+Node *lookup_variable_value(Node *var, Node *env)
 {
 	while (!env->is_the_empty_list())
 	{
-		Pair *pair_env = static_cast<Pair *>(env);
-
-		Node *frame = first_frame(pair_env);
+		Node *frame = first_frame(env);
 		Node *vars  = variables(frame);
 		Node *vals  = values(frame);
 
@@ -317,7 +315,7 @@ Node *lookup_variable_value(Symbol *var, Node *env)
 			vars = temp_vars->cdr();
 			vals = temp_vals->cdr();
 		}
-		env = enclosing_environment(pair_env);
+		env = enclosing_environment(env);
 	}
 	std::cerr << "unbound variable" << std::endl;
 	exit(1);
@@ -325,7 +323,6 @@ Node *lookup_variable_value(Symbol *var, Node *env)
 
 Node *Symbol::eval(Node *env)
 {
-	std::cout << "Symbol::eval" << std::endl;
 	return lookup_variable_value(this, env);
 }
 
@@ -352,8 +349,6 @@ static void set_variable_value(Node *var, Node *val, Node *env)
                 vals->set_car(val);
                 return;
             }
-
-
             vars = vars->cdr();
             vals = vals->cdr();
         }
@@ -376,7 +371,6 @@ static Node *assignment_value(Node *exp)
 
 Node *eval_assignment(Node *exp, Node *env)
 {
-	//TODO really bad code
 	Node *assignment_val = assignment_value(exp);
 	Node *evaluated_assignment = assignment_val->eval(env);
 	Node *assignment_var = assignment_variable(exp);
@@ -428,7 +422,7 @@ static void define_variable(Node *var, Node *val, Node *env)
 
     while (!vars->is_the_empty_list()) {
         if (var == vars->car()) {
-            vals->set_car(vals);
+            vals->set_car(val);
             return;
         }
         vars = vars->cdr();
@@ -461,6 +455,11 @@ static bool is_assignment(Node *expression)
 	return is_tagged_list(expression, gb::n_set_symbol);
 }
 
+static bool is_variable(Node *expression)
+{
+	return expression->is_symbol();
+}
+
 
 
 Node *Pair::eval(Node *env)
@@ -475,14 +474,15 @@ Node *Pair::eval(Node *env)
 	} else if (is_assignment(this))
 	{
 		return eval_assignment(this, env);
+	} else if (is_variable(this))
+	{
+		return lookup_variable_value(this, env);
 	}
 	/*
 	if (is_tagged_list(this, gb::n_quote_symbol)) {
 		return text_of_quotation(this, env);
 	} else if (is_tagged_list(this, gb::n_set_symbol)) {
 		return eval_assignment(this, env);
-	} else if (is_tagged_list(this, gb::n_define_symbol)) {
-		return eval_definition(this, env);	
 	} else if (is_tagged_list(this, gb::n_if_symbol)) {
 		Node *p_pred = cdr()->car();
 		Node *p_exp = p_pred->eval(env);
