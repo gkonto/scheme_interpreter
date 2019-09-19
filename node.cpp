@@ -23,8 +23,80 @@ static Node *setup_environment()
 	return initial_env;
 }
 
+
+Node *add_proc(Node *arguments) {
+	long result = 0;
+    
+	while (!arguments->is_the_empty_list()) {
+		Fixnum *p_num = static_cast<Fixnum *>(arguments->car());
+		result += p_num->value(); 
+		arguments = arguments->cdr();
+	}
+	return new Fixnum(result);
+}
+
+Node *make_primitive_proc(Node *(*fn)(struct Node *arguments))
+{
+	return new PrimitiveProc(fn);
+}
+
+Node *first_frame(Node *p_pair)
+{
+	return p_pair->car();
+}
+
+Node *variables(Node *frame)
+{
+	return frame->car();
+}
+
+Node *values(Node *frame)
+{
+	return frame->cdr();
+}
+
+Node *enclosing_environment(Node *env)
+{
+	return env->cdr();
+}
+
+static void add_binding_to_frame(Node *var, Node *val, Node *frame) {
+    frame->set_car(new Pair(var, frame->car()));
+    frame->set_cdr(new Pair(val, frame->cdr()));
+}
+
+
+
+
+static void define_variable(Node *var, Node *val, Node *env) 
+{
+
+    Node *frame = first_frame(env);    
+    Node *vars = variables(frame);
+    Node *vals = values(frame);
+
+    while (!vars->is_the_empty_list()) {
+        if (var == vars->car()) {
+            vals->set_car(val);
+            return;
+        }
+        vars = vars->cdr();
+        vals = vals->cdr();
+    }
+    add_binding_to_frame(var, val, frame);
+}
+
+
+
 void populate_environment(Node *env)
 {
+
+#define add_procedure(scheme_name, c_name)              \
+    define_variable(SymbolTable::make_symbol(scheme_name),           \
+                    make_primitive_proc(c_name),        \
+                    env);
+
+	add_procedure("+", add_proc);
 }
 
 static Node *make_environment()
@@ -109,6 +181,16 @@ Symbol *SymbolTable::make_symbol(const std::string &value)
 	return found_s;
 }
 
+
+bool Fixnum::is_true()
+{
+	return value_ == 0;
+}
+
+bool Fixnum::is_false()
+{
+	return !is_true();
+}
 
 bool Boolean::is_false()
 {
@@ -276,25 +358,6 @@ Node *String::eval(Node *env)
 	return this;
 }
 
-Node *first_frame(Node *p_pair)
-{
-	return p_pair->car();
-}
-
-Node *variables(Node *frame)
-{
-	return frame->car();
-}
-
-Node *values(Node *frame)
-{
-	return frame->cdr();
-}
-
-Node *enclosing_environment(Node *env)
-{
-	return env->cdr();
-}
 
 //TODO class Environment?
 Node *lookup_variable_value(Node *var, Node *env)
@@ -407,31 +470,6 @@ Node *definition_value(Node *exp)
 	}
 }
 
-static void add_binding_to_frame(Node *var, Node *val, Node *frame) {
-    frame->set_car(new Pair(var, frame->car()));
-    frame->set_cdr(new Pair(val, frame->cdr()));
-}
-
-
-static void define_variable(Node *var, Node *val, Node *env) 
-{
-
-    Node *frame = first_frame(env);    
-    Node *vars = variables(frame);
-    Node *vals = values(frame);
-
-    while (!vars->is_the_empty_list()) {
-        if (var == vars->car()) {
-            vals->set_car(val);
-            return;
-        }
-        vars = vars->cdr();
-        vals = vals->cdr();
-    }
-    add_binding_to_frame(var, val, frame);
-}
-
-
 static Node *eval_definition(Pair *exp, Node *env)
 {
 	Node *def_variable = definition_variable(exp);
@@ -460,6 +498,72 @@ static bool is_variable(Node *expression)
 	return expression->is_symbol();
 }
 
+static bool is_if(Node *expression)
+{
+	return is_tagged_list(expression, gb::n_if_symbol);
+}
+
+
+Node *if_predicate(Node *p_node)
+{
+	return p_node->cdr()->car();
+}
+
+Node *if_consequent(Node *p_node)
+{
+	return p_node->cdr()->cdr()->car();
+}
+
+Node *if_alternative(Node *p_node)
+{
+	Node *p_exp = p_node->cdr()->cdr()->cdr();
+
+	if (p_exp->is_the_empty_list()) {
+		return gb::n_false_obj;
+	} else {
+		return p_exp->car();
+	}
+}
+
+
+
+static Node *op(Node *exp)
+{
+	return exp->car();
+}
+
+static Node *operands(Node *exp)
+{
+	return exp->cdr();
+}
+
+static bool is_no_operands(Node *ops)
+{
+	return ops->is_the_empty_list();
+}
+
+static Node *first_operand(Node *ops)
+{
+	return ops->car();
+}
+
+static Node *rest_operands(Node *ops)
+{
+	return ops->cdr();
+}
+
+Node *list_of_values(Node *exp, Node *env)
+{
+	if (is_no_operands(exp)) {
+		return gb::n_the_empty_list;
+	} else {
+		Node *first_op = first_operand(exp);
+
+		return new Pair(first_op->eval(env),
+				list_of_values(rest_operands(exp), env));
+	}
+}
+
 
 
 Node *Pair::eval(Node *env)
@@ -477,6 +581,22 @@ Node *Pair::eval(Node *env)
 	} else if (is_variable(this))
 	{
 		return lookup_variable_value(this, env);
+	} else if (is_if(this))
+	{
+		Node *if_pred = if_predicate(this);
+		Node *eval_pred = if_pred->eval(env);
+		Node *exp = eval_pred->is_true() ? if_consequent(this) : if_alternative(this);
+		
+		return exp->eval(env);
+	} else {
+		Node *procedure = op(this)->eval(env);
+		Node *arguments = list_of_values(operands(this), env);
+
+		if (procedure->is_primitive_proc())
+		{
+			PrimitiveProc *pp = static_cast<PrimitiveProc *>(procedure);
+			return pp->exec(arguments);
+		}
 	}
 	/*
 	if (is_tagged_list(this, gb::n_quote_symbol)) {

@@ -13,6 +13,7 @@ class Test_SchemeInterpreter
 		Test_SchemeInterpreter()
 		{
 			init();
+			/*
 			_test("123", "123");
 			_test("-123", "-123");
 			_test("007", "7");
@@ -68,7 +69,6 @@ class Test_SchemeInterpreter
 			_test("a", "1");
 			_test("(define a 2)", "ok");
 			_test("a", "2");
-			/*
 			//_test("(set! b 3)", "unbound variable");
 			
 			//if
@@ -77,12 +77,14 @@ class Test_SchemeInterpreter
 			_test("(if #f 1 2)", "2");
 			_test("(if #t 1)", "1");
 			_test("(if #f 1)", "#f");
+			*/
 			_test("(if 0 1 2)", "1");
 
 			//primitive procedures
 			_test("(+ 1 2 3)", "6");
 			_test("(+ 3 -1)", "2");
 			_test("+", "#<primitive-procedure>");
+			/*
 			_test("(boolean? #t)", "#t");
 			_test("(integer->char 99)", "#\\c");
 			_test("(< 1 2 3)", "#t");

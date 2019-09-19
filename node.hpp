@@ -63,6 +63,9 @@ class Fixnum : public Node
 		explicit Fixnum(long val) : value_(val) {}
 		bool is_fixnum() { return true; }
 		Node *eval(Node *env);
+		bool is_true(); 
+		bool is_false();
+		long value() { return value_; }
 
 		std::string write(std::ostream &out);
 	private:
@@ -169,6 +172,12 @@ class PrimitiveProc : public Node
 		using PrimitiveProcFun = Node *(*)(Node *args);
 		explicit PrimitiveProc(PrimitiveProcFun fun) : fun_(fun) {}
 		bool is_primitive_proc() { return true; }
+		Node *exec(Node *arguments) { return fun_(arguments); }
+		Node *eval(Node *env) 
+		{ 
+			std::cerr << "PrimitiveProc: Should not reach" << std::endl;
+			return nullptr;
+		}
 
 		std::string write(std::ostream &out);
 	private:
