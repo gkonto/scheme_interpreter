@@ -86,6 +86,64 @@ static void define_variable(Node *var, Node *val, Node *env)
     add_binding_to_frame(var, val, frame);
 }
 
+Node *is_boolean_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+	return p_car->is_boolean() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *integer_to_char_proc(Node *arguments) 
+{
+	Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+	return new Char(p_car->value());
+}
+
+Node *is_null_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+	return p_car->is_the_empty_list() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *is_symbol_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+    return p_car->is_symbol() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *is_integer_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+    return p_car->is_fixnum() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *is_char_proc(Node *arguments) 
+{
+	Node *p_car = arguments->car();
+    return p_car->is_character() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *is_string_proc(Node *arguments) 
+{
+	Node *p_car = arguments->car();
+    return p_car->is_string() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *is_pair_proc(Node *arguments) 
+{
+	Node *p_car = arguments->car();
+    return p_car->is_pair() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+
+Node *is_procedure_proc(Node *arguments) 
+{
+    Node *obj = arguments->car();
+
+    return (obj->is_primitive_proc() ||
+            obj->is_compound_proc()) ? gb::n_true_obj :	gb::n_false_obj;
+}
+
+
 
 
 void populate_environment(Node *env)
@@ -96,7 +154,68 @@ void populate_environment(Node *env)
                     make_primitive_proc(c_name),        \
                     env);
 
-	add_procedure("+", add_proc);
+    add_procedure("null?"      , is_null_proc);
+    add_procedure("boolean?"   , is_boolean_proc);
+    add_procedure("symbol?"    , is_symbol_proc);
+    add_procedure("integer?"   , is_integer_proc);
+    add_procedure("char?"      , is_char_proc);
+    add_procedure("string?"    , is_string_proc);
+    add_procedure("pair?"      , is_pair_proc);
+    add_procedure("procedure?" , is_procedure_proc);
+    
+
+    
+    /*
+    add_procedure("char->integer" , char_to_integer_proc);
+    add_procedure("integer->char" , integer_to_char_proc);
+    add_procedure("number->string", number_to_string_proc);
+    add_procedure("string->number", string_to_number_proc);
+    add_procedure("symbol->string", symbol_to_string_proc);
+    add_procedure("string->symbol", string_to_symbol_proc);
+      
+    add_procedure("+"        , add_proc);
+    add_procedure("-"        , sub_proc);
+    add_procedure("*"        , mul_proc);
+    add_procedure("quotient" , quotient_proc);
+    add_procedure("remainder", remainder_proc);
+    add_procedure("="        , is_number_equal_proc);
+    add_procedure("<"        , is_less_than_proc);
+    add_procedure(">"        , is_greater_than_proc);
+
+    add_procedure("cons"    , cons_proc);
+    add_procedure("car"     , car_proc);
+    add_procedure("cdr"     , cdr_proc);
+    add_procedure("set-car!", set_car_proc);
+    add_procedure("set-cdr!", set_cdr_proc);
+    add_procedure("list"    , list_proc);
+
+    add_procedure("eq?", is_eq_proc);
+
+    add_procedure("apply", apply_proc);
+    
+    add_procedure("interaction-environment", 
+                                     interaction_environment_proc);
+    add_procedure("null-environment", null_environment_proc);
+    add_procedure("environment"     , environment_proc);
+    add_procedure("eval"            , eval_proc);
+
+
+    add_procedure("load", load_proc);
+    add_procedure("open-input-port"  , open_input_port_proc);
+    add_procedure("close-input-port" , close_input_port_proc);
+    add_procedure("input-port?"      , is_input_port_proc);
+    add_procedure("read"             , read_proc);
+    add_procedure("read-char"        , read_char_proc);
+    add_procedure("peek-char"        , peek_char_proc);
+    add_procedure("eof-object?"      , is_eof_object_proc);
+    add_procedure("open-output-port" , open_output_port_proc);
+    add_procedure("close-output-port", close_output_port_proc);
+    add_procedure("output-port?"     , is_output_port_proc);
+    add_procedure("write-char"       , write_char_proc);
+    add_procedure("write"            , write_proc);
+
+    add_procedure("error", error_proc);
+    */
 }
 
 static Node *make_environment()
