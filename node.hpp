@@ -19,9 +19,14 @@ class Node
 		virtual bool is_output_port()    { return false; }
 		virtual bool is_eof()            { return false; } 
 		virtual bool is_boolean()        { return false; }
-
 		virtual bool is_true()  { return false; }
 		virtual bool is_false() { return false; }
+
+		virtual bool equals(Node *b)
+		{
+			std::cerr << "Node::equals" << std::endl;
+			return false;
+		}
 
 		virtual void set_car(Node *p_car)
 		{
@@ -55,6 +60,8 @@ class Node
 
 		virtual std::string write(std::ostream &out) = 0;
 		virtual Node *eval(Node *env) = 0;
+
+		virtual bool compare(class Fixnum *p_node) { return false; }
 };
 
 class Fixnum : public Node
@@ -66,6 +73,16 @@ class Fixnum : public Node
 		bool is_true(); 
 		bool is_false();
 		long value() { return value_; }
+		bool compare(Fixnum *p_node) { return true; }
+		bool equals(Node *b)
+		{
+			Fixnum *a = dynamic_cast<Fixnum *>(b);
+			if (a && a->value() == value_)
+			{
+				return true;
+			}
+			return false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -80,6 +97,17 @@ class Boolean : public Node
 		bool is_true();
 		bool is_false();
 		Node *eval(Node *env);
+		bool value() { return value_; }
+
+		bool equals(Node *b)
+		{
+			Boolean *a = dynamic_cast<Boolean *>(b);
+			if (a && a->value() == value_)
+			{
+				return true;
+			}
+			return false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -94,6 +122,16 @@ class Char : public Node
 		Node *eval(Node *env);
 		char value() { return value_; }
 
+		bool equals(Node *b)
+		{
+			Char *a = dynamic_cast<Char *>(b);
+			if (a && a->value() == value_)
+			{
+				return true;
+			}
+			return false;
+		}
+
 		std::string write(std::ostream &out);
 	private:
 		char value_;
@@ -106,6 +144,16 @@ class String : public Node
 		bool is_string() { return true; }
 		Node *eval(Node *env);
 		std::string value() { return value_; }
+
+		bool equals(Node *b)
+		{
+			String *a = dynamic_cast<String *>(b);
+			if (a && a->value() == value_)
+			{
+				return true;
+			}
+			return false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -124,6 +172,12 @@ class EmptyList : public List
 		explicit EmptyList() {}
 		bool is_the_empty_list() { return true; }
 
+		bool equals(Node *b)
+		{
+			EmptyList *a = dynamic_cast<EmptyList *>(b);
+			return a ? true : false;
+		}
+
 		std::string write(std::ostream &out);
 		Node *eval(Node *env);
 	private:
@@ -136,6 +190,17 @@ class Symbol : public Node
 		bool is_symbol() { return true; }
 		std::string label() { return label_; }
 		Node *eval(Node *env);
+
+		bool equals(Node *b)
+		{
+			Symbol *a = dynamic_cast<Symbol *>(b);
+			if (a && a->label() == label_)
+			{
+				return true;
+			}
+			return false;
+		}
+
 
 		bool is_same_label(const std::string &value) const
 		{
@@ -160,6 +225,19 @@ class Pair : public List
 		void set_cdr(Node *p_node) { cdr_ = p_node; }
 		Node *eval(Node *env);
 
+		bool equals(Node *b)
+		{
+			Pair *a = dynamic_cast<Pair *>(b);
+			if (a)
+			{
+				if (a->car()->equals(car_) && a->cdr()->equals(cdr_))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		std::string write(std::ostream &out);
 	private:
 		std::string write_pair(std::ostream &out);
@@ -175,10 +253,21 @@ class PrimitiveProc : public Node
 		explicit PrimitiveProc(PrimitiveProcFun fun) : fun_(fun) {}
 		bool is_primitive_proc() { return true; }
 		Node *exec(Node *arguments) { return fun_(arguments); }
+		PrimitiveProcFun fun() { return fun_; }
 		Node *eval(Node *env) 
 		{ 
 			std::cerr << "PrimitiveProc: Should not reach" << std::endl;
 			return nullptr;
+		}
+
+		bool equals(Node *b)
+		{
+			PrimitiveProc *a = dynamic_cast<PrimitiveProc *>(b);
+			if (a && a->fun() == fun_)
+			{
+				return true;
+			}
+			return false;
 		}
 
 		std::string write(std::ostream &out);
@@ -194,6 +283,21 @@ class CompoundProc : public Node
        			parameters_(params), body_(body), env_(env)
 			{}
 		bool is_compound_proc() { return true; }
+		Node *parameters() { return parameters_; }
+		Node *body() { return body_; }
+		Node *env() { return env_; }
+
+		bool equals(Node *b)
+		{
+			CompoundProc *a = dynamic_cast<CompoundProc *>(b);
+			if (a && parameters_ == a->parameters()
+					&& body_ == a->body()
+					&& body_ == a->env())
+			{
+				return true;
+			}
+			return false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -208,6 +312,18 @@ class InputPort : public Node
 	public:
 		explicit InputPort(FILE *stream) : stream_(stream) {}
 		bool is_input_port() { return true; }
+		FILE *stream() { return stream_; }
+
+		bool equals(Node *b)
+		{
+			InputPort *a = dynamic_cast<InputPort *>(b);
+			if (a && stream_ == a->stream())
+			{
+				return true;
+			}
+			return false;
+		}
+
 
 		std::string write(std::ostream &out);
 	private:
@@ -219,6 +335,17 @@ class OutputPort : public Node
 	public:
 		explicit OutputPort(FILE *stream) : stream_(stream) {}
 		bool is_output_port() { return true; }
+		FILE *stream() { return stream_; }
+
+		bool equals(Node *b)
+		{
+			OutputPort *a = dynamic_cast<OutputPort *>(b);
+			if (a && stream_ == a->stream())
+			{
+				return true;
+			}
+			return false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -230,6 +357,12 @@ class Eof
 	public:
 		Eof() {}
 		bool is_eof() { return true; }
+
+		bool equals(Node *b)
+		{
+			Eof *a = dynamic_cast<Eof *>(b);
+			return a ? true : false;
+		}
 
 		std::string write(std::ostream &out);
 	private:
@@ -244,6 +377,7 @@ namespace gb
 	extern Symbol    *n_quote_symbol;
 	extern Node      *n_the_global_environment;
 	extern Node      *n_the_empty_environment;
+	extern Symbol    *n_ok_symbol;
 }
 
 class SymbolTable

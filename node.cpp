@@ -292,6 +292,76 @@ Node *is_greater_than_proc(Node *arguments)
 }
 
 
+Node *cons_proc(Node *arguments) 
+{
+	Node *p_car = arguments->car();
+	Node *p_cadr = arguments->cdr()->car();
+
+
+    return new Pair(p_car, p_cadr);
+}
+
+Node *car_proc(Node *arguments) {
+
+    return arguments->car()->car();
+}
+
+Node *cdr_proc(Node *arguments) {
+    return arguments->car()->cdr();
+}
+
+Node *set_car_proc(Node *arguments) {
+	Node *p_car = arguments->car();
+	Node *p_cadr = arguments->cdr()->car();
+    p_car->set_car(p_cadr);
+    return gb::n_ok_symbol;
+}
+
+Node *set_cdr_proc(Node *arguments) {
+	Node *p_car = arguments->car();
+	Node *p_cadr = arguments->cdr()->car();
+
+    p_car->set_cdr(p_cadr);
+    return gb::n_ok_symbol;
+}
+
+Node *list_proc(Node *arguments) {
+    return arguments;
+}
+
+
+Node *is_eq_proc(Node *arguments) {
+    Node *obj1 = arguments->car();
+    Node *obj2 = arguments->cdr()->car();
+
+    return obj1->equals(obj2) ? gb::n_true_obj : gb::n_false_obj;
+    
+    /*
+    if (obj1->type_ != obj2->type_) {
+        return global::false_obj;
+    }
+    switch (obj1->type_) {
+        case TT_FIXNUM:
+            return (obj1->long_value_ == 
+                    obj2->long_value_) ?
+                        global::true_obj : global::false_obj;
+            break;
+        case TT_CHARACTER:
+            return (obj1->long_value_ == 
+                    obj2->long_value_) ?
+                        global::true_obj : global::false_obj;
+            break;
+        case TT_STRING:
+            return (obj1->str_value_.compare(
+                           obj2->str_value_) == 0) ?
+                        global::true_obj : global::false_obj;
+            break;
+        default:
+            return (obj1 == obj2) ? global::true_obj : global::false_obj;
+    }
+    */
+}
+
 
 
 
@@ -331,7 +401,6 @@ void populate_environment(Node *env)
     add_procedure("<"        , is_less_than_proc);
     add_procedure(">"        , is_greater_than_proc);
 
-    /*
     add_procedure("cons"    , cons_proc);
     add_procedure("car"     , car_proc);
     add_procedure("cdr"     , cdr_proc);
@@ -339,15 +408,13 @@ void populate_environment(Node *env)
     add_procedure("set-cdr!", set_cdr_proc);
     add_procedure("list"    , list_proc);
 
-    add_procedure("eq?", is_eq_proc);
-
-    add_procedure("apply", apply_proc);
-    
-    add_procedure("interaction-environment", 
-                                     interaction_environment_proc);
-    add_procedure("null-environment", null_environment_proc);
-    add_procedure("environment"     , environment_proc);
-    add_procedure("eval"            , eval_proc);
+    add_procedure("eq?"                    , is_eq_proc);
+    /*
+    add_procedure("apply"                  , apply_proc);
+    add_procedure("interaction-environment", interaction_environment_proc);
+    add_procedure("null-environment"       , null_environment_proc);
+    add_procedure("environment"            , environment_proc);
+    add_procedure("eval"                   , eval_proc);
 
 
     add_procedure("load", load_proc);
