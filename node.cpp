@@ -143,6 +143,42 @@ Node *is_procedure_proc(Node *arguments)
             obj->is_compound_proc()) ? gb::n_true_obj :	gb::n_false_obj;
 }
 
+Node *char_to_integer_proc(Node *arguments) 
+{
+	Char *p_car = static_cast<Char *>(arguments->car());
+    return new Fixnum(p_car->value());
+}
+
+Node *number_to_string_proc(Node *arguments) 
+{
+	Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+	std::string buf = std::to_string(p_car->value());
+	return new String(buf);
+}
+
+Node *string_to_number_proc(Node *arguments) 
+{
+	long x = 0;
+	String *p_car = static_cast<String *>(arguments->car());
+	std::stringstream ss(p_car->value());
+	ss >> x;
+    return new Fixnum(x);
+}
+
+Node *symbol_to_string_proc(Node *arguments) 
+{
+	Symbol *p_car = static_cast<Symbol *>(arguments->car());
+    return new String(p_car->label());
+}
+
+Node *string_to_symbol_proc(Node *arguments) 
+{
+	String *p_car = static_cast<String *>(arguments->car());
+	return SymbolTable::make_symbol(p_car->value());
+}
+
+
+
 
 
 
@@ -150,7 +186,7 @@ void populate_environment(Node *env)
 {
 
 #define add_procedure(scheme_name, c_name)              \
-    define_variable(SymbolTable::make_symbol(scheme_name),           \
+	define_variable(SymbolTable::make_symbol(scheme_name),           \
                     make_primitive_proc(c_name),        \
                     env);
 
@@ -165,13 +201,13 @@ void populate_environment(Node *env)
     
 
     
-    /*
     add_procedure("char->integer" , char_to_integer_proc);
     add_procedure("integer->char" , integer_to_char_proc);
     add_procedure("number->string", number_to_string_proc);
     add_procedure("string->number", string_to_number_proc);
     add_procedure("symbol->string", symbol_to_string_proc);
     add_procedure("string->symbol", string_to_symbol_proc);
+    /*
       
     add_procedure("+"        , add_proc);
     add_procedure("-"        , sub_proc);

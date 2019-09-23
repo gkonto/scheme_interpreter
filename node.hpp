@@ -92,6 +92,7 @@ class Char : public Node
 		explicit Char(char val) : value_(val) {}
 		bool is_character() { return true; }
 		Node *eval(Node *env);
+		char value() { return value_; }
 
 		std::string write(std::ostream &out);
 	private:
@@ -104,6 +105,7 @@ class String : public Node
 		explicit String(const std::string &val) : value_(val) {}
 		bool is_string() { return true; }
 		Node *eval(Node *env);
+		std::string value() { return value_; }
 
 		std::string write(std::ostream &out);
 	private:
