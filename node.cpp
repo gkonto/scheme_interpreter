@@ -178,6 +178,120 @@ Node *string_to_symbol_proc(Node *arguments)
 }
 
 
+Node *sub_proc(Node *arguments) 
+{
+    long result;
+    
+    Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+
+    result = p_car->value();
+    arguments = arguments->cdr();
+    while (!arguments->is_the_empty_list()) {
+	p_car = static_cast<Fixnum *>(arguments->car());
+	result -= p_car->value();
+	arguments = arguments->cdr();
+    }
+    return new Fixnum(result);
+}
+
+Node *mul_proc(Node *arguments) 
+{
+	long result = 1;
+
+	while (!arguments->is_the_empty_list()) {
+		Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+		result *= p_car->value();
+		arguments = arguments->cdr();
+	}
+	return new Fixnum(result);
+}
+
+Node *quotient_proc(Node *arguments) 
+{
+	Fixnum *p_car  = static_cast<Fixnum *>(arguments->car());
+	Fixnum *p_cadr = static_cast<Fixnum *>(arguments->cdr()->car());
+
+	return new Fixnum(p_car->value()/ (p_cadr->value()));
+}
+
+
+
+
+Node *remainder_proc(Node *arguments) 
+{
+	Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+	Fixnum *p_cadr = static_cast<Fixnum *>(arguments->cdr()->car());
+
+	return new Fixnum(p_car->value() % p_cadr->value());
+}
+
+Node *is_number_equal_proc(Node *arguments) 
+{
+    long value;
+   Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+    value = p_car->value();
+    arguments = arguments->cdr();
+    while (!arguments->is_the_empty_list()) {
+	    p_car = static_cast<Fixnum *>(arguments->car());
+        if (value != p_car->value()) {
+            return gb::n_false_obj;
+        }
+	arguments = arguments->cdr();
+    }
+    return gb::n_true_obj;
+}
+
+Node *is_less_than_proc(Node *arguments) 
+{
+    long previous;
+    long next;
+    
+    Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+
+    previous = p_car->value();
+    arguments = arguments->cdr();
+
+    while (!arguments->is_the_empty_list()) {
+	p_car = static_cast<Fixnum *>(arguments->car());
+        next = p_car->value();
+        if (previous < next) {
+            previous = next;
+        }
+        else {
+            return gb::n_false_obj;
+        }
+
+	arguments = arguments->cdr();
+    }
+    return gb::n_true_obj;
+}
+
+
+
+Node *is_greater_than_proc(Node *arguments) 
+{
+	long previous;
+	long next;
+
+	Fixnum *p_car = static_cast<Fixnum *>(arguments->car());
+	previous = p_car->value();
+	arguments = arguments->cdr();
+
+    while (!arguments->is_the_empty_list()) {
+	    p_car = static_cast<Fixnum *>(arguments->car());
+        next = p_car->value();
+        if (previous > next) {
+            previous = next;
+        }
+        else {
+            return gb::n_false_obj;
+        }
+	arguments = arguments->cdr();
+    }
+    return gb::n_true_obj;
+}
+
+
 
 
 
@@ -207,7 +321,6 @@ void populate_environment(Node *env)
     add_procedure("string->number", string_to_number_proc);
     add_procedure("symbol->string", symbol_to_string_proc);
     add_procedure("string->symbol", string_to_symbol_proc);
-    /*
       
     add_procedure("+"        , add_proc);
     add_procedure("-"        , sub_proc);
@@ -218,6 +331,7 @@ void populate_environment(Node *env)
     add_procedure("<"        , is_less_than_proc);
     add_procedure(">"        , is_greater_than_proc);
 
+    /*
     add_procedure("cons"    , cons_proc);
     add_procedure("car"     , car_proc);
     add_procedure("cdr"     , cdr_proc);
