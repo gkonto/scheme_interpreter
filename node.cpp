@@ -1,7 +1,9 @@
 #include <string>
+#include <fstream>
 #include <sstream>
 #include "node.hpp"
 #include "object.hpp"
+#include "parser.hpp"
 
 static Node *make_frame(Node *vars, Node *vals)
 {
@@ -362,6 +364,118 @@ Node *is_eq_proc(Node *arguments) {
     */
 }
 
+Node *apply_proc(Node *arguments)
+{
+	std::cerr << "illegal state: The body of the apply primitive procedure should not execute." << std::endl;
+	exit(1);
+}
+
+Node *eval_proc(Node *arguments)
+{
+	std::cerr << "illegal state: The body of the eval primitive procedure should not execute." << std::endl;
+	exit(1);
+}
+
+
+
+
+Node *interaction_environment_proc(Node *arguments)
+{
+	return gb::n_the_global_environment;
+}
+
+Node *null_environment_proc(Node *arguments)
+{
+	return setup_environment();
+}
+
+
+void populate_environment(Node *env);
+
+static Node *make_environment()
+{
+	Node *env = setup_environment();
+	populate_environment(env);
+
+	return env;
+}
+
+Node *environment_proc(Node *arguments)
+{
+	return make_environment();
+}
+
+
+Node *load_proc(Node *arguments)
+{
+	String *p_str = static_cast<String *>(arguments->car());
+	std::string filename(p_str->value());
+
+	std::ifstream ifs(filename, std::istream::in);
+
+	if (ifs.fail()) {
+		std::cerr << "could not load file \"" << filename << "\"" << std::endl;
+		exit(1);
+	}
+
+	Node *exp;
+	Node *result;
+
+	Parser parser(ifs);
+	while ((exp = parser.read()) != NULL) {
+		result = exp->eval(gb::n_the_global_environment);
+	}
+
+	ifs.close();
+	return result;
+}
+
+
+Node *open_input_port_proc(Node *arguments)
+{
+	String *p_str = static_cast<String *>(arguments->car());
+	std::string filename(p_str->value());
+	FILE *in = fopen(filename.c_str(), "r");
+	if (in == nullptr) {
+		std::cerr << "could not open file \" " << filename << "\"" << std::endl;
+		exit(1);
+	}
+	return new InputPort(in);
+}
+
+Node *close_input_port_proc(Node *arguments)
+{
+	InputPort *p_in = static_cast<InputPort *>(arguments->car());
+	int result = fclose(p_in->stream());
+	if (result == EOF)
+	{
+		std::cerr << "could not close input port" << std::endl;
+		exit(1);
+	}
+	return gb::n_ok_symbol;
+}
+
+Node *is_input_port_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+	return p_car->is_input_port() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *read_proc(Node *arguments) {
+	InputPort *p_car = static_cast<InputPort *>(arguments->car());
+    FILE *in = arguments->is_the_empty_list() ?
+             stdin :
+             p_car->stream();
+
+    //TODO not sure if correct
+    std::fstream ini;
+	ini << in;
+	Parser parser(ini);
+    Node *result = parser.read();
+
+    return !result ? gb::n_eof_object : result;
+}
+
 
 
 
@@ -409,7 +523,6 @@ void populate_environment(Node *env)
     add_procedure("list"    , list_proc);
 
     add_procedure("eq?"                    , is_eq_proc);
-    /*
     add_procedure("apply"                  , apply_proc);
     add_procedure("interaction-environment", interaction_environment_proc);
     add_procedure("null-environment"       , null_environment_proc);
@@ -422,6 +535,7 @@ void populate_environment(Node *env)
     add_procedure("close-input-port" , close_input_port_proc);
     add_procedure("input-port?"      , is_input_port_proc);
     add_procedure("read"             , read_proc);
+    /*
     add_procedure("read-char"        , read_char_proc);
     add_procedure("peek-char"        , peek_char_proc);
     add_procedure("eof-object?"      , is_eof_object_proc);
@@ -433,14 +547,6 @@ void populate_environment(Node *env)
 
     add_procedure("error", error_proc);
     */
-}
-
-static Node *make_environment()
-{
-	Node *env = setup_environment();
-	populate_environment(env);
-
-	return env;
 }
 
 namespace gb
@@ -900,6 +1006,43 @@ Node *list_of_values(Node *exp, Node *env)
 	}
 }
 
+Node *eval_expression(Node *arguments)
+{
+	return arguments->car();
+}
+
+Node *eval_environment(Node *arguments)
+{
+	return arguments->cdr()->car();
+}
+
+Node *apply_operator(Node *arguments)
+{
+	return arguments->car();
+}
+
+
+
+
+
+
+Node *prepare_apply_operands(Node *arguments)
+{
+	Node *p_cdr = arguments->cdr();
+
+	if (p_cdr->is_the_empty_list()) {
+		return arguments->car();
+	} else {
+		return new Pair(arguments->car(), prepare_apply_operands(p_cdr));
+
+	}
+}
+
+Node *apply_operands(Node *arguments)
+{
+	return prepare_apply_operands(arguments->cdr());
+}
+
 
 
 Node *Pair::eval(Node *env)
@@ -931,8 +1074,35 @@ Node *Pair::eval(Node *env)
 		if (procedure->is_primitive_proc())
 		{
 			PrimitiveProc *pp = static_cast<PrimitiveProc *>(procedure);
-			return pp->exec(arguments);
+			if (pp->fun() == eval_proc) {
+				Node *exp = eval_expression(arguments);
+				Node *env = eval_environment(arguments);
+				return exp->eval(env);
+			} else if (pp->fun() == apply_proc) {
+				procedure = apply_operator(arguments);
+				arguments = apply_operands(arguments);
+			}
 		}
+
+
+		if (procedure->is_primitive_proc()) {
+			PrimitiveProc *pp = static_cast<PrimitiveProc *>(procedure);
+			return pp->exec(arguments);
+		} else if (procedure->is_compound_proc()) {
+			CompoundProc *cp = static_cast<CompoundProc *>(procedure);
+			env = extend_environment(
+					cp->parameters(),
+					arguments,
+					cp->env()
+					);
+
+			Node *exp = new Pair(gb::n_begin_symbol, cp->body());
+			return exp->eval(env);
+		} else {
+			std::cerr << "unkown procedure type" << std::endl;
+			exit(1);
+		}
+
 	}
 	/*
 	if (is_tagged_list(this, gb::n_quote_symbol)) {

@@ -314,6 +314,12 @@ class InputPort : public Node
 		bool is_input_port() { return true; }
 		FILE *stream() { return stream_; }
 
+		Node *eval(Node *env) {
+			std::cerr << "InputPort::eval --> error" << std::endl;
+			exit(1);
+		}
+		
+
 		bool equals(Node *b)
 		{
 			InputPort *a = dynamic_cast<InputPort *>(b);
@@ -352,11 +358,16 @@ class OutputPort : public Node
 		FILE *stream_;
 };
 
-class Eof
+class Eof : public Node
 {
 	public:
 		Eof() {}
 		bool is_eof() { return true; }
+		Node *eval(Node *exp)
+		{
+			std::cerr << "Eof::eval --> Error" << std::endl;
+			exit(1);
+		}
 
 		bool equals(Node *b)
 		{
@@ -378,6 +389,7 @@ namespace gb
 	extern Node      *n_the_global_environment;
 	extern Node      *n_the_empty_environment;
 	extern Symbol    *n_ok_symbol;
+	extern Eof       *n_eof_object;
 }
 
 class SymbolTable
