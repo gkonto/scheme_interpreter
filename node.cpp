@@ -1210,6 +1210,77 @@ Node *rest_exps(Node *seq) {
     return seq->cdr();
 }
 
+bool is_cond(Node *exp)
+{
+	return is_tagged_list(exp, gb::n_cond_symbol);
+}
+
+Node *cond_clauses(Node *exp) {
+    return exp->cdr();
+}
+
+Node *cond_predicate(Node *clause)
+{
+	return clause->car();
+}
+
+char is_cond_else_clause(Node *clause) {
+    return cond_predicate(clause) == gb::n_else_symbol;
+}
+
+Node *sequence_to_exp(Node *seq) {
+
+    if (seq->is_the_empty_list()) {
+        return seq;
+    } else if (is_last_exp(seq)) {
+        return first_exp(seq);
+    } else {
+        return new Pair(gb::n_begin_symbol, seq);
+    }
+}
+
+Node *cond_actions(Node *clause)
+{
+	return clause->cdr();
+}
+
+Node *make_if(Node *predicate, Node *consequent, Node *alternative) 
+{
+    return new Pair(gb::n_if_symbol,
+                new Pair(predicate,
+                     new Pair(consequent,
+                          new Pair(alternative, gb::n_the_empty_list))));
+}
+
+
+Node *expand_clauses(Node *clauses) {
+    
+    if (clauses->is_the_empty_list()) {
+        return gb::n_false_obj;
+    } else {
+        Node *first = clauses->car();
+        Node *rest  = clauses->cdr();
+
+
+        if (is_cond_else_clause(first)) {
+            if (rest->is_the_empty_list()) {
+                return sequence_to_exp(cond_actions(first));
+            } else {
+		    std::cerr << "else clause isn't last cond->if" << std::endl;
+                exit(1);
+            }
+        } else {
+            return make_if(cond_predicate(first),
+                           sequence_to_exp(cond_actions(first)),
+                           expand_clauses(rest));
+        }
+    }
+}
+Node *cond_to_if(Node *exp)
+{
+	return expand_clauses(cond_clauses(exp));
+}
+
 Node *Pair::eval(Node *env)
 {
 	//TODO fix that code
@@ -1244,7 +1315,10 @@ Node *Pair::eval(Node *env)
 			exp = rest_exps(exp);
 		}
 		exp = first_exp(exp);
-		exp->eval(env);
+		return exp->eval(env);
+	} else if (is_cond(this)) {
+			Node *exp = cond_to_if(this);
+			return exp->eval(env);
 	} else {
 		Node *procedure = op(this)->eval(env);
 		Node *arguments = list_of_values(operands(this), env);
