@@ -342,6 +342,11 @@ class OutputPort : public Node
 		explicit OutputPort(FILE *stream) : stream_(stream) {}
 		bool is_output_port() { return true; }
 		FILE *stream() { return stream_; }
+		Node *eval(Node *env)
+		{
+			std::cerr << "OutputPort::eval --> error" << std::endl;
+			exit(1);
+		}
 
 		bool equals(Node *b)
 		{

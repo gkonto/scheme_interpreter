@@ -478,6 +478,140 @@ Node *read_proc(Node *arguments) {
 
 
 
+Node *read_char_proc(Node *arguments)
+{
+	OutputPort *p_out = static_cast<OutputPort *>(arguments->car());
+	FILE *in = arguments->is_the_empty_list() ? stdin : p_out->stream();
+
+	std::fstream ini;
+	ini << in;
+	char result = ini.get();
+	if (result == EOF)
+	{
+		return gb::n_eof_object;
+	} else {
+		return new Char(result);
+	}
+}
+
+
+Node *peek_char_proc(Node *arguments) {
+   InputPort *p_in = static_cast<InputPort *>(arguments->car());
+    FILE *in = arguments->is_the_empty_list() ?
+             stdin :
+             p_in->stream();
+
+    std::fstream ini;
+    ini << in;
+    char result = ini.peek();
+   
+    if (result == EOF)
+    {
+	return gb::n_eof_object;
+    } else {
+	    return new Char(result);
+    }
+}
+
+Node *is_eof_object_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+	return p_car->is_eof() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+
+
+
+Node *open_output_port_proc(Node *arguments)
+{
+	String *p_string = static_cast<String *>(arguments->car());
+	std::string filename(p_string->value());
+	FILE *out = fopen(filename.c_str(), "w");
+	if (!out)
+	{
+		std::cerr << "could not open file \"" << filename << "\"";
+		exit(1);
+	}
+	return new OutputPort(out);
+}
+
+Node *close_output_port_proc(Node *arguments)
+{
+	OutputPort *p_out = static_cast<OutputPort *>(arguments->car());
+	int result = fclose(p_out->stream());
+	if (result == EOF) {
+		std::cerr << "could not close output port" << std::endl;
+		exit(1);
+	}
+	return gb::n_ok_symbol;
+}
+
+
+Node *is_output_port_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+	return p_car->is_output_port() ? gb::n_true_obj : gb::n_false_obj;
+}
+
+Node *write_char_proc(Node *arguments) {
+    Node *p_car = arguments->car();
+    arguments = arguments->cdr();
+
+
+    OutputPort *p_port = static_cast<OutputPort *>(p_car);
+    FILE *out = arguments->is_the_empty_list() ?
+             stdout :
+             p_port->stream();
+
+
+    Char *p_char = static_cast<Char *>(p_car);
+    putc(p_char->value(), out);    
+    fflush(out);
+    return gb::n_ok_symbol;
+}
+
+
+Node *write_proc(Node *arguments) {
+    
+    OutputPort *exp = static_cast<OutputPort *>(arguments->car());
+    arguments = arguments->cdr();
+
+
+    FILE *out = arguments->is_the_empty_list() ?
+             stdout :
+             exp->stream();
+
+    std::fstream ini;
+    ini << out;
+    exp->write(ini);
+    ini.flush();
+    return gb::n_ok_symbol;
+}
+
+
+
+
+
+
+
+
+Node *error_proc(Node *arguments)
+{
+	Node *p_car = arguments->car();
+    while (!arguments->is_the_empty_list()) {
+        p_car->write(std::cerr);
+
+	std::cerr << " ";
+        arguments = arguments->cdr();
+    };
+    std::cout << std::endl << "exiting" << std::endl;
+    exit(1);
+}
+
+
+
+
+
 
 
 void populate_environment(Node *env)
@@ -496,8 +630,6 @@ void populate_environment(Node *env)
     add_procedure("string?"    , is_string_proc);
     add_procedure("pair?"      , is_pair_proc);
     add_procedure("procedure?" , is_procedure_proc);
-    
-
     
     add_procedure("char->integer" , char_to_integer_proc);
     add_procedure("integer->char" , integer_to_char_proc);
