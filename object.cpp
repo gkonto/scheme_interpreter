@@ -1532,8 +1532,7 @@ tailcall:
 		}
 		exp = first_exp(exp);
 		goto tailcall;
-		}
-		else if (is_or(exp)) {
+	} else if (is_or(exp)) {
 		exp = or_tests(exp);
 		if (is_the_empty_list(exp)) {
 		    return global::false_obj;

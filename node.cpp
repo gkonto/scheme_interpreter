@@ -1342,9 +1342,32 @@ Node *let_arguments(Node *exp)
 }
 
 
+
+bool is_and(Node *p_exp)
+{
+	return is_tagged_list(p_exp, gb::n_and_symbol);
+}
+
+
 Node *let_to_application(Node *exp)
 {
     return new Pair(make_lambda(let_parameters(exp), let_body(exp)), let_arguments(exp));
+}
+
+
+Node *and_tests(Node *exp)
+{
+	return exp->cdr();
+}
+
+bool is_or(Node *exp)
+{
+	return is_tagged_list(exp, gb::n_or_symbol);
+}
+
+Node *or_tests(Node *exp)
+{
+	return exp->cdr();
 }
 
 Node *Pair::eval(Node *env)
@@ -1388,6 +1411,39 @@ Node *Pair::eval(Node *env)
 	} else if (is_let(this)) {
 		Node *exp = let_to_application(this);
 		return exp->eval(env);
+	} else if (is_and(this)) {
+		Node *exp = and_tests(this);
+
+		if (exp->is_the_empty_list()) {
+		    return gb::n_true_obj;
+		}
+
+		while (!is_last_exp(exp)) {
+			Node *p_first = first_exp(exp);
+		    Node *result = p_first->eval(env);
+		    if (result->is_false()) {
+			return result;
+		    }
+		    exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
+		return exp->eval(env);
+	} else if (is_or(this)) {
+		Node *exp = or_tests(this);
+		if (exp->is_the_empty_list()) {
+		    return gb::n_false_obj;
+		}
+		while (!is_last_exp(exp)) {
+			Node *p_first = first_exp(exp);
+		    Node *result = p_first->eval(env);
+		    if (result->is_true()) {
+			return result;
+		    }
+		    exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
+		return exp->eval(env);
+
 	} else {
 		Node *procedure = op(this)->eval(env);
 		Node *arguments = list_of_values(operands(this), env);
