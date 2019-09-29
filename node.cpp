@@ -1186,6 +1186,30 @@ Node *lambda_body(Node *exp) {
 }
 
 
+bool is_begin(Node *exp)
+{
+	return is_tagged_list(exp, gb::n_begin_symbol);
+}
+
+Node *begin_actions(Node *exp)
+{
+	return exp->cdr();
+}
+
+bool is_last_exp(Node *seq)
+{
+	return seq->cdr()->is_the_empty_list();
+}
+
+Node *first_exp(Node *seq)
+{
+	return seq->car();
+}
+
+Node *rest_exps(Node *seq) {
+    return seq->cdr();
+}
+
 Node *Pair::eval(Node *env)
 {
 	//TODO fix that code
@@ -1212,7 +1236,15 @@ Node *Pair::eval(Node *env)
 		return new CompoundProc(lambda_parameters(this),
 				lambda_body(this),
 				env);
-
+	} else if (is_begin(this)) {
+		Node *exp = begin_actions(this);
+		while (!is_last_exp(exp)) {
+			Node *f_exp = first_exp(exp);
+			f_exp->eval(env);
+			exp = rest_exps(exp);
+		}
+		exp = first_exp(exp);
+		exp->eval(env);
 	} else {
 		Node *procedure = op(this)->eval(env);
 		Node *arguments = list_of_values(operands(this), env);
