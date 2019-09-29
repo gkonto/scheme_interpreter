@@ -1281,6 +1281,72 @@ Node *cond_to_if(Node *exp)
 	return expand_clauses(cond_clauses(exp));
 }
 
+
+bool is_let(Node *exp)
+{
+	return is_tagged_list(exp, gb::n_let_symbol);
+}
+
+
+Node *let_bindings(Node *exp) {
+    return exp->cdr()->car();
+}
+
+Node *let_body(Node *exp) {
+    return exp->cdr()->cdr();
+}
+
+
+Node *binding_parameter(Node *binding) 
+{
+    return binding->car();
+}
+
+
+
+Node *binding_argument(Node *binding) 
+{
+    return binding->cdr()->car();
+}
+
+Node *bindings_parameters(Node *bindings) 
+{
+    if (bindings->is_the_empty_list())
+    {
+         return      gb::n_the_empty_list;
+    } else {
+              return  new Pair(binding_parameter(bindings->car()),
+                    bindings_parameters(bindings->cdr()));
+    }
+}
+
+Node *bindings_arguments(Node *bindings) 
+{
+	if (bindings->is_the_empty_list())
+	{
+		return gb::n_the_empty_list ;
+	} else {
+		return new Pair(binding_argument(bindings->car()),
+			bindings_arguments(bindings->cdr()));
+	}
+}
+
+Node *let_parameters(Node *exp) 
+{
+    return bindings_parameters(let_bindings(exp));
+}
+
+Node *let_arguments(Node *exp) 
+{
+    return bindings_arguments(let_bindings(exp));
+}
+
+
+Node *let_to_application(Node *exp)
+{
+    return new Pair(make_lambda(let_parameters(exp), let_body(exp)), let_arguments(exp));
+}
+
 Node *Pair::eval(Node *env)
 {
 	//TODO fix that code
@@ -1319,6 +1385,9 @@ Node *Pair::eval(Node *env)
 	} else if (is_cond(this)) {
 			Node *exp = cond_to_if(this);
 			return exp->eval(env);
+	} else if (is_let(this)) {
+		Node *exp = let_to_application(this);
+		return exp->eval(env);
 	} else {
 		Node *procedure = op(this)->eval(env);
 		Node *arguments = list_of_values(operands(this), env);
