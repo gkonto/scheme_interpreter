@@ -667,7 +667,6 @@ void populate_environment(Node *env)
     add_procedure("close-input-port" , close_input_port_proc);
     add_procedure("input-port?"      , is_input_port_proc);
     add_procedure("read"             , read_proc);
-    /*
     add_procedure("read-char"        , read_char_proc);
     add_procedure("peek-char"        , peek_char_proc);
     add_procedure("eof-object?"      , is_eof_object_proc);
@@ -678,7 +677,6 @@ void populate_environment(Node *env)
     add_procedure("write"            , write_proc);
 
     add_procedure("error", error_proc);
-    */
 }
 
 namespace gb
