@@ -286,6 +286,11 @@ class CompoundProc : public Node
 		Node *parameters() { return parameters_; }
 		Node *body() { return body_; }
 		Node *env() { return env_; }
+		Node *eval(Node *env)
+		{
+			std::cerr << "CompoundProc::eval --> error" << std::endl;
+			exit(1);
+		}
 
 		bool equals(Node *b)
 		{

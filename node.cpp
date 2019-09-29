@@ -1173,6 +1173,17 @@ Node *apply_operands(Node *arguments)
 	return prepare_apply_operands(arguments->cdr());
 }
 
+bool is_lambda(Node *exp) {
+    return is_tagged_list(exp, gb::n_lambda_symbol);
+}
+
+Node *lambda_parameters(Node *exp) {
+    return exp->cdr()->car();
+}
+
+Node *lambda_body(Node *exp) {
+    return exp->cdr()->cdr();
+}
 
 
 Node *Pair::eval(Node *env)
@@ -1197,6 +1208,11 @@ Node *Pair::eval(Node *env)
 		Node *exp = eval_pred->is_true() ? if_consequent(this) : if_alternative(this);
 		
 		return exp->eval(env);
+	} else if (is_lambda(this)) {
+		return new CompoundProc(lambda_parameters(this),
+				lambda_body(this),
+				env);
+
 	} else {
 		Node *procedure = op(this)->eval(env);
 		Node *arguments = list_of_values(operands(this), env);
