@@ -553,18 +553,19 @@ Node *is_output_port_proc(Node *arguments)
 	return p_car->is_output_port() ? gb::n_true_obj : gb::n_false_obj;
 }
 
-Node *write_char_proc(Node *arguments) {
-    Node *p_car = arguments->car();
+Node *write_char_proc(Node *arguments) 
+{
+    Node *character = arguments->car();
     arguments = arguments->cdr();
 
 
-    OutputPort *p_port = static_cast<OutputPort *>(p_car);
+    OutputPort *p_port = static_cast<OutputPort *>(arguments->car());
     FILE *out = arguments->is_the_empty_list() ?
              stdout :
              p_port->stream();
 
 
-    Char *p_char = static_cast<Char *>(p_car);
+    Char *p_char = static_cast<Char *>(character);
     putc(p_char->value(), out);    
     fflush(out);
     return gb::n_ok_symbol;
@@ -577,9 +578,10 @@ Node *write_proc(Node *arguments) {
     arguments = arguments->cdr();
 
 
+    OutputPort *p_out = static_cast<OutputPort *>(arguments->car());
     FILE *out = arguments->is_the_empty_list() ?
              stdout :
-             exp->stream();
+             p_out->stream();
 
     std::fstream ini;
     ini << out;
@@ -756,12 +758,12 @@ Symbol *SymbolTable::make_symbol(const std::string &value)
 
 bool Fixnum::is_true()
 {
-	return value_ == 0;
+	return true;
 }
 
 bool Fixnum::is_false()
 {
-	return !is_true();
+	return false;
 }
 
 bool Boolean::is_false()
