@@ -11,6 +11,7 @@ set(HEADERS
 	object.hpp
 	node.hpp
 	parser.hpp
+	symboltable.hpp
    )
 
 set(SOURCES 
@@ -18,6 +19,7 @@ set(SOURCES
 	scheme.cpp
 	node.cpp
 	parser.cpp
+	symboltable.cpp
     )
 
 ADD_EXECUTABLE(scheme_repl ${HEADERS} ${SOURCES})

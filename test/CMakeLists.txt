@@ -9,6 +9,7 @@ set(HEADERS
 	../object.hpp
 	../node.hpp
 	../parser.hpp
+	../symboltable.hpp
    )
 
 set(SOURCES 
@@ -16,6 +17,7 @@ set(SOURCES
 	../object.cpp
 	../parser.cpp
 	../node.cpp
+	../symboltable.cpp
     )
 
 ADD_EXECUTABLE(scheme_test ${HEADERS} ${SOURCES})

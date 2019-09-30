@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "node.hpp"
+#include "symboltable.hpp"
 
 Node *Parser::read_pair()
 {

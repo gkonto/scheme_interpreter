@@ -32,7 +32,7 @@ namespace global {
 	Object *eof_object             = 0;
 };
 
-Object *make_environment(void);
+Object *make_environment(int i);
 Object *make_input_port(FILE *in);
 static Object *setup_environment(void);
 void populate_environment(Object *env);
@@ -384,7 +384,7 @@ Object *null_environment_proc(Object *arguments) {
 
 Object *environment_proc(Object *arguments) 
 {
-    return make_environment();
+    return make_environment(1);
 }
 
 Object *eval_proc(Object *arguments) 
@@ -393,7 +393,7 @@ Object *eval_proc(Object *arguments)
 	exit(1);
 }
 
-Object *make_environment(void)
+Object *make_environment(int i)
 {
     Object *env = setup_environment();
     populate_environment(env);
@@ -900,7 +900,7 @@ void init(void)
 	global::eof_object = new Object(TT_EOF_OBJECT);
 
 	global::the_empty_environment = global::the_empty_list;
-	global::the_global_environment = make_environment();
+	global::the_global_environment = make_environment(1);
 }
 /***************************** READ ******************************/
 

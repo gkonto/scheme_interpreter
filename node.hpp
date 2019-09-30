@@ -160,13 +160,8 @@ class String : public Node
 		std::string value_;
 };
 
-class List : public Node
-{
-	public:
-	private:
-};
 
-class EmptyList : public List
+class EmptyList : public Node
 {
 	public:
 		explicit EmptyList() {}
@@ -214,7 +209,7 @@ class Symbol : public Node
 };
 
 
-class Pair : public List
+class Pair : public Node
 {
 	public:
 		explicit Pair(Node *car, Node *cdr) : car_(car), cdr_(cdr) {}
@@ -389,7 +384,6 @@ class Eof : public Node
 	private:
 };
 
-
 namespace gb
 {
 	extern Boolean   *n_false_obj;
@@ -401,22 +395,5 @@ namespace gb
 	extern Symbol    *n_ok_symbol;
 	extern Eof       *n_eof_object;
 }
-
-class SymbolTable
-{
-	public:
-		static SymbolTable &get();
-
-		Node *get_element() const { return table_; }
-		Symbol *find_symbol(const std::string &symbol) const;
-
-		static Symbol *make_symbol(const std::string &value);
-	private:
-		SymbolTable();
-		void add_symbol(Node *p_symbol);
-
-		List *table_;
-};
-
 
 #endif 
