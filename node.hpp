@@ -4,6 +4,7 @@
 #include <iostream> 
 
 //This is abstract
+
 class Node
 {
 	public: 
@@ -395,5 +396,7 @@ namespace gb
 	extern Symbol    *n_ok_symbol;
 	extern Eof       *n_eof_object;
 }
+
+extern void init();
 
 #endif 

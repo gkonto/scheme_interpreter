@@ -2,7 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include "node.hpp"
-#include "object.hpp"
 #include "parser.hpp"
 #include "symboltable.hpp"
 

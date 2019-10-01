@@ -2,7 +2,6 @@
 #include <string>
 #include <sstream>
 
-#include "../object.hpp"
 #include "../parser.hpp"
 #include "../node.hpp"
 
@@ -12,7 +11,6 @@ class Test_SchemeInterpreter
 	public:
 		Test_SchemeInterpreter()
 		{
-			init();
 			_test("123", "123");
 			_test("-123", "-123");
 			_test("007", "7");
@@ -138,7 +136,6 @@ class Test_SchemeInterpreter
 
 	private:
 		
-#ifdef NEW_FUNCTION
 		void _test(const std::string &input, const std::string &expecting)
 		{
 			std::istringstream it(input);
@@ -158,25 +155,6 @@ class Test_SchemeInterpreter
 			}
 			std::cout << "[-]       " << input << " --- Success" << std::endl;
 		}
-
-#else
-		void _test(const std::string &input, const std::string &expecting)
-		{
-			std::istringstream it(input);
-			std::cout << "[+] Test: " << input << std::endl;
-			Object *exp = read(it);
-			std::string got = write(std::cout, eval(exp, global::the_global_environment));
-
-			if (expecting.compare(got)) {
-				std::cout << "Error in test!" << std::endl;
-				std::cout << "Input    : " << input << std::endl;
-				std::cout << "Expected : " << expecting << std::endl;
-				std::cout << "Got      : " << got << std::endl;
-				exit(1);
-			}
-			std::cout << "[-]       " << input << " --- Success" << std::endl;
-		}
-#endif
 };
 
 
