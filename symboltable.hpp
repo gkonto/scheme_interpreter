@@ -21,4 +21,12 @@ class SymbolTable
 		class Node *table_;
 };
 
+Node *first_frame(Node *p_pair);
+Node *variables(Node *frame);
+Node *values(Node *frame);
+void define_variable(Node *var, Node *val, Node *env);
+Node *eval_proc(Node *arguments);
+Node *apply_proc(Node *arguments);
+Node *extend_environment(Node *vars, Node *vals, Node *base_env);
+
 #endif
